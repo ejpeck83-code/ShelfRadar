@@ -1,0 +1,35 @@
+{
+  "kind": "success",
+  "fetchedAt": "2026-07-18T16:15:00.000Z",
+  "items": [
+    {
+      "productId": "NECA-54210",
+      "manufacturerSku": "54210",
+      "title": "TMNT The Last Ronin Ultimate Donatello",
+      "url": "https://store.necaonline.com/products/tmnt-last-ronin-donatello-sanitized",
+      "brand": "NECA",
+      "line": "The Last Ronin",
+      "productType": "Action Figure",
+      "characters": ["Donatello"],
+      "upc": "634482542101",
+      "priceMinor": 3499,
+      "state": "preorder",
+      "onlineState": "preorder",
+      "releaseDate": "2026-10-01"
+    },
+    {
+      "productId": "NECA-54133",
+      "manufacturerSku": "54133",
+      "title": "TMNT The Last Ronin Ultimate Leonardo",
+      "url": "https://store.necaonline.com/products/tmnt-last-ronin-leonardo-sanitized",
+      "brand": "NECA",
+      "line": "The Last Ronin",
+      "productType": "Action Figure",
+      "characters": ["Leonardo"],
+      "upc": "634482541333",
+      "priceMinor": 3499,
+      "state": "active",
+      "onlineState": "online_only"
+    }
+  ]
+}
