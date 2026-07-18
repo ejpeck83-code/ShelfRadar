@@ -43,7 +43,7 @@ The shared ingestion runner also hard-codes parser version `target-fixture-v1` w
 - `npm test`: passed, 10 files / 48 tests.
 - `npm run build`: passed; Next.js production build compiled and generated all routes.
 - `npm run test:integration`: command passed with 1 file / 2 tests skipped because `TEST_DATABASE_URL` is not configured. No schema or repository integration behavior changed.
-- Implementation commit SHA: recorded after the cohesive implementation commit is created.
+- Implementation commit SHA: `7edb6ec1b0aef4805ba2f35e274cd19edc683bdf`.
 
 ## Known limitations
 
