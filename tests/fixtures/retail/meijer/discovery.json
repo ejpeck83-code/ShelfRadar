@@ -1,0 +1,33 @@
+{
+  "kind": "success",
+  "fetchedAt": "2026-07-18T16:10:00.000Z",
+  "items": [
+    {
+      "sku": "MEI-901245",
+      "title": "Playmates TMNT Mutant Mayhem Raphael Figure",
+      "url": "https://www.meijer.com/shopping/product/MEI-901245.html",
+      "brand": "Playmates Toys",
+      "line": "Mutant Mayhem",
+      "productType": "Action Figure",
+      "characters": ["Raphael"],
+      "upc": "012345678905",
+      "priceMinor": 999,
+      "state": "active",
+      "availability": [
+        { "storeId": "M-230", "state": "unknown", "observedAt": "2026-07-18T16:10:00.000Z", "label": "Check store for availability" }
+      ]
+    },
+    {
+      "sku": "MEI-901246",
+      "title": "NECA TMNT Cartoon Accessory Set",
+      "url": "https://www.meijer.com/shopping/product/MEI-901246.html",
+      "brand": "NECA",
+      "line": "Teenage Mutant Ninja Turtles Cartoon",
+      "productType": "Accessory Set",
+      "characters": [],
+      "priceMinor": 3999,
+      "state": "active",
+      "availability": []
+    }
+  ]
+}
