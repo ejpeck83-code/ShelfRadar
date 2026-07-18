@@ -19,4 +19,4 @@ Milestones 0 and 1 establish the strict Next.js/PostgreSQL foundation and fixtur
 
 ## Verification and limitations
 
-Exact command results and the cohesive feature commit SHA are recorded in the final task completion report after verification. Local PostgreSQL is not installed, so database migration/seed/integration run locally only when `TEST_DATABASE_URL` is provided; CI provisions PostgreSQL.
+The cohesive implementation commit is `a6ea9fdcc881c21ed4f7c49d7ce70c4edc66cc6c`. Exact command results are recorded in the final task completion report. Local PostgreSQL is not installed, so database migration/seed/integration run locally only when `TEST_DATABASE_URL` is provided; CI provisions PostgreSQL.
