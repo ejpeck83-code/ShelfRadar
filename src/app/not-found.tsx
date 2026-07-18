@@ -1,0 +1,1 @@
+export default function NotFound() { return <div className="page empty-state"><h1>Product not found</h1><p>The requested product is not in the current catalog.</p><a className="primary-link" href="/discover">Return to Discover</a></div>; }

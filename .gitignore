@@ -1,0 +1,14 @@
+.DS_Store
+.env
+.env.local
+.env.*.local
+!.env.example
+.next/
+node_modules/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+drizzle/meta/_journal.json.tmp
+Shelf-Radar-Codex-Handoff.docx
+shelf-radar-codex-handoff/

@@ -1,0 +1,68 @@
+[
+  {
+    "externalId": "target-91234567",
+    "title": "NECA TMNT The Last Ronin Ultimate Leonardo",
+    "canonicalUrl": "https://www.target.com/p/-/A-91234567",
+    "brand": "NECA",
+    "manufacturer": "NECA",
+    "line": "The Last Ronin",
+    "productType": "Action Figure",
+    "characters": ["Leonardo"],
+    "identifiers": [
+      { "kind": "UPC", "value": "634482541333", "confidence": "EXACT" },
+      { "kind": "TCIN", "value": "91234567", "confidence": "EXACT" },
+      { "kind": "DPCI", "value": "087-16-7921", "confidence": "CLAIMED" }
+    ],
+    "currency": "USD",
+    "priceMinor": 3499,
+    "listingStatus": "ACTIVE",
+    "availability": [
+      { "retailerStoreId": "T-1350", "status": "IN_STOCK", "observedAt": "2026-07-18T16:00:00.000Z", "rawLabel": "In stock" },
+      { "retailerStoreId": "T-1363", "status": "SOURCE_UNAVAILABLE", "observedAt": "2026-07-18T16:00:00.000Z", "rawLabel": "Store availability unavailable" }
+    ],
+    "provenance": { "sourceKey": "target", "externalId": "target-91234567", "fetchedAt": "2026-07-18T16:00:00.000Z", "parserVersion": "target-fixture-v1", "rawRef": "fixture:target/discovery.json#target-91234567" }
+  },
+  {
+    "externalId": "target-92345678",
+    "title": "Playmates TMNT Mutant Mayhem Sewer Lair Set",
+    "canonicalUrl": "https://www.target.com/p/-/A-92345678",
+    "brand": "Playmates Toys",
+    "manufacturer": "Playmates Toys",
+    "line": "Mutant Mayhem",
+    "productType": "Playset",
+    "characters": ["Leonardo", "Raphael", "Donatello", "Michelangelo"],
+    "identifiers": [
+      { "kind": "UPC", "value": "043377834917", "confidence": "EXACT" },
+      { "kind": "TCIN", "value": "92345678", "confidence": "EXACT" },
+      { "kind": "DPCI", "value": "087-06-7734", "confidence": "CLAIMED" }
+    ],
+    "currency": "USD",
+    "priceMinor": 5999,
+    "listingStatus": "ACTIVE",
+    "availability": [
+      { "status": "ONLINE_ONLY", "observedAt": "2026-07-18T16:00:00.000Z", "rawLabel": "Shipping available" }
+    ],
+    "provenance": { "sourceKey": "target", "externalId": "target-92345678", "fetchedAt": "2026-07-18T16:00:00.000Z", "parserVersion": "target-fixture-v1", "rawRef": "fixture:target/discovery.json#target-92345678" }
+  },
+  {
+    "externalId": "target-93456789",
+    "title": "Super7 TMNT Ultimates Donatello",
+    "canonicalUrl": "https://www.target.com/p/-/A-93456789",
+    "brand": "Super7",
+    "manufacturer": "Super7",
+    "line": "Ultimates!",
+    "productType": "Action Figure",
+    "characters": ["Donatello"],
+    "identifiers": [
+      { "kind": "UPC", "value": "840049827543", "confidence": "EXACT" },
+      { "kind": "TCIN", "value": "93456789", "confidence": "EXACT" }
+    ],
+    "currency": "USD",
+    "priceMinor": 5499,
+    "listingStatus": "OUT_OF_STOCK",
+    "availability": [
+      { "retailerStoreId": "T-1788", "status": "OUT_OF_STOCK", "observedAt": "2026-07-18T16:00:00.000Z", "rawLabel": "Out of stock" }
+    ],
+    "provenance": { "sourceKey": "target", "externalId": "target-93456789", "fetchedAt": "2026-07-18T16:00:00.000Z", "parserVersion": "target-fixture-v1", "rawRef": "fixture:target/discovery.json#target-93456789" }
+  }
+]
