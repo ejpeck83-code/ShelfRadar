@@ -16,6 +16,9 @@ const contentSecurityPolicy = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  images: {
+    remotePatterns: [{ protocol: "https", hostname: "cdn.shopify.com", pathname: "/s/files/**" }]
+  },
   turbopack: { root: process.cwd() },
   async headers() {
     return [{

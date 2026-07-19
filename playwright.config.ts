@@ -7,7 +7,10 @@ export default defineConfig({
   reporter: process.env.CI ? "github" : "list",
   use: {
     baseURL: process.env.PREVIEW_BASE_URL ?? "http://127.0.0.1:3000",
-    trace: "retain-on-failure"
+    trace: "retain-on-failure",
+    ...(process.env.PRODUCTION_AUTH_USERNAME && process.env.PRODUCTION_AUTH_SECRET ? {
+      httpCredentials: { username: process.env.PRODUCTION_AUTH_USERNAME, password: process.env.PRODUCTION_AUTH_SECRET }
+    } : {})
   },
   projects: [
     { name: "mobile-chromium", use: { ...devices["iPhone 13"], browserName: "chromium", viewport: { width: 390, height: 844 } } },

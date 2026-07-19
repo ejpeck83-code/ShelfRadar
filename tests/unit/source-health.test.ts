@@ -7,14 +7,44 @@ import { createCrowdAdapterRegistry } from "@/adapters/crowd/registry";
 describe("source health matrix", () => {
   it("labels fixture sources without claiming live access", () => {
     const env = envSchema.parse({ NODE_ENV: "test", FIXTURE_INGESTION_ENABLED: "true" });
-    expect(buildSourceMatrix(env).every((source) => source.state === "fixture-only")).toBe(true);
+    const matrix = new Map(buildSourceMatrix(env).map((source) => [source.key, source.state]));
+    expect(["target", "walmart", "meijer"].every((key) => matrix.get(key as "target") === "pending-sanctioned-access")).toBe(true);
+    expect(["neca", "online", "reddit"].every((key) => matrix.get(key as "neca") === "fixture-only")).toBe(true);
   });
 
   it("labels a production fixture preview as synthetic while keeping production database sources unavailable", () => {
     const preview = envSchema.parse({ NODE_ENV: "production", SHELF_RADAR_DATA_MODE: "fixture", FIXTURE_INGESTION_ENABLED: "true" });
-    expect(buildSourceMatrix(preview).every((source) => source.state === "fixture-only")).toBe(true);
+    expect(buildSourceMatrix(preview).filter((source) => ["target", "walmart", "meijer"].includes(source.key)).every((source) => source.state === "pending-sanctioned-access")).toBe(true);
+    expect(buildSourceMatrix(preview).filter((source) => !["target", "walmart", "meijer"].includes(source.key)).every((source) => source.state === "fixture-only")).toBe(true);
     const database = envSchema.parse({ NODE_ENV: "production", SHELF_RADAR_DATA_MODE: "database", DATABASE_URL: "postgresql://example.invalid/shelf_radar", AUTH_MODE: "shared-secret", AUTH_SECRET: "a".repeat(32), ALLOWED_USER_EMAIL: "owner@example.com", CRON_SECRET: "b".repeat(32), FIXTURE_INGESTION_ENABLED: "true" });
-    expect(buildSourceMatrix(database).every((source) => source.state === "unavailable")).toBe(true);
+    const matrix = new Map(buildSourceMatrix(database).map((source) => [source.key, source.state]));
+    expect(["target", "walmart", "meijer"].every((key) => matrix.get(key as "target") === "pending-sanctioned-access")).toBe(true);
+    expect(["neca", "online", "reddit"].every((key) => matrix.get(key as "neca") === "unavailable")).toBe(true);
+  });
+
+  it("labels only explicitly composed public production sources as live", () => {
+    const env = envSchema.parse({
+      NODE_ENV: "production",
+      SHELF_RADAR_DATA_MODE: "database",
+      DATABASE_URL: "postgresql://example.invalid/shelf_radar",
+      AUTH_MODE: "shared-secret",
+      AUTH_SECRET: "a".repeat(32),
+      ALLOWED_USER_EMAIL: "owner@example.com",
+      CRON_SECRET: "b".repeat(32),
+      FIXTURE_INGESTION_ENABLED: "false",
+      LIVE_INGESTION_ENABLED: "true",
+      TARGET_ADAPTER_MODE: "unavailable",
+      WALMART_ADAPTER_MODE: "unavailable",
+      MEIJER_ADAPTER_MODE: "unavailable",
+      NECA_ADAPTER_MODE: "public",
+      ONLINE_RETAIL_ADAPTER_MODE: "unavailable",
+      REDDIT_ADAPTER_MODE: "rss"
+    });
+    const matrix = new Map(buildSourceMatrix(env).map((source) => [source.key, source]));
+    expect(matrix.get("neca")).toMatchObject({ state: "live", note: expect.stringContaining("official NECA Store") });
+    expect(matrix.get("reddit")).toMatchObject({ state: "unavailable", note: expect.stringContaining("pending explicit Reddit approval") });
+    expect(["target", "walmart", "meijer"].every((key) => matrix.get(key as "target")?.state === "pending-sanctioned-access")).toBe(true);
+    expect(matrix.get("online")?.state).toBe("unavailable");
   });
 
   it("can fail each source independently and all sources together", () => {
@@ -22,11 +52,19 @@ describe("source health matrix", () => {
     for (const key of keys) {
       const variable = ({ target: "TARGET_ADAPTER_MODE", walmart: "WALMART_ADAPTER_MODE", meijer: "MEIJER_ADAPTER_MODE", neca: "NECA_ADAPTER_MODE", online: "ONLINE_RETAIL_ADAPTER_MODE", reddit: "REDDIT_ADAPTER_MODE" } as const)[key];
       const env = envSchema.parse({ NODE_ENV: "test", [variable]: "unavailable" });
-      expect(sourceStateFor(env, key)).toBe("unavailable");
+      expect(sourceStateFor(env, key)).toBe(["target", "walmart", "meijer"].includes(key) ? "pending-sanctioned-access" : "unavailable");
       expect(keys.filter((other) => other !== key).every((other) => sourceStateFor(env, other) === "fixture-only")).toBe(true);
     }
     const unavailable = envSchema.parse({ NODE_ENV: "test", TARGET_ADAPTER_MODE: "unavailable", WALMART_ADAPTER_MODE: "unavailable", MEIJER_ADAPTER_MODE: "unavailable", NECA_ADAPTER_MODE: "unavailable", ONLINE_RETAIL_ADAPTER_MODE: "unavailable", REDDIT_ADAPTER_MODE: "unavailable" });
-    expect(buildSourceMatrix(unavailable).every((source) => source.state === "unavailable")).toBe(true);
+    expect(buildSourceMatrix(unavailable).filter((source) => ["target", "walmart", "meijer"].includes(source.key)).every((source) => source.state === "pending-sanctioned-access")).toBe(true);
+    expect(buildSourceMatrix(unavailable).filter((source) => !["target", "walmart", "meijer"].includes(source.key)).every((source) => source.state === "unavailable")).toBe(true);
+  });
+
+  it("does not compose public Reddit RSS from environment flags alone", async () => {
+    const env = envSchema.parse({ NODE_ENV: "production", SHELF_RADAR_DATA_MODE: "database", DATABASE_URL: "postgresql://example.invalid/shelf_radar", AUTH_MODE: "shared-secret", AUTH_SECRET: "a".repeat(32), ALLOWED_USER_EMAIL: "owner@example.com", CRON_SECRET: "b".repeat(32), LIVE_INGESTION_ENABLED: "true", FIXTURE_INGESTION_ENABLED: "false", REDDIT_ADAPTER_MODE: "rss" });
+    const adapter = createCrowdAdapterRegistry(env).get("reddit");
+    const result = await adapter?.fetchPosts({ terms: ["TMNT"], pageLimit: 1 }, { signal: new AbortController().signal, requestId: "policy-block", now: new Date("2026-07-19T12:00:00.000Z") });
+    expect(result).toMatchObject({ kind: "unavailable", reason: expect.stringContaining("approved access") });
   });
 
   it("returns structured unavailable outcomes when every source fails together", async () => {

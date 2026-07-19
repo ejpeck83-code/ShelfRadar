@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased — live production connectivity
+
+- Added a mobile field-hunt board with named-store check cards, retailer listing/search links, owner manual observations, and 30-day remembered login support.
+- Added owner field-check ranking factors so recent `saw it`, `limited`, `checked none`, and `checked unsure` observations influence Hunt leads transparently without claiming retailer inventory truth.
+- Added persistent-production composition for the official NECA Store read-only catalog.
+- Added bounded fixed-host transports with redirect rejection, timeouts, response-size caps, Zod/XML validation, rate-limit outcomes, sanitized crowd content, and deterministic provenance.
+- Prepared a daily GitHub Actions NECA discovery worker and retained the authenticated Vercel retention schedule. Job routes accept authenticated cookie-free cron `GET` requests as well as manual `POST` requests.
+- Enabled reviewed Shopify CDN product images while retaining a strict host/path allowlist.
+- Added a current source-feasibility review for Target, Walmart, and Meijer and labeled each **Pending sanctioned access**.
+- Removed automatic Reddit RSS composition and its production schedule after Reddit's June 2026 policy began requiring explicit approval for automated data access. Cached sightings retain their original timestamps and stale status.
+- Added a mandatory release gate requiring verified, sanctioned, real named-store availability before the production MVP can be called complete.
+
 ## [Unreleased]
 
 - Release validation and any authorized post-v0.1.0 changes.

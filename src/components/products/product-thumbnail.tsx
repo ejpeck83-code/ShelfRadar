@@ -6,5 +6,10 @@ export function ProductThumbnail({ name, imageUrl, priority = false }: { name: s
 }
 
 export function isSafeProductImageUrl(value: string | null): value is string {
-  return Boolean(value?.startsWith("/products/") && !value.includes("..") && !value.includes("\\"));
+  if (value?.startsWith("/products/") && !value.includes("..") && !value.includes("\\")) return true;
+  if (!value) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && url.hostname === "cdn.shopify.com" && url.pathname.startsWith("/s/files/");
+  } catch { return false; }
 }

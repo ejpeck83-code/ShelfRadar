@@ -14,15 +14,15 @@ This is inexpensive, mobile-friendly, and operationally light while preserving a
 
 - Local: fixture adapters by default, local PostgreSQL, mock single user.
 - Preview: isolated or branched database where practical; fixture ingestion; no production schedules.
-- Production: database mode, shared-secret allowlisted-owner authentication, authenticated job routes, fixtures disabled, every source unavailable, live ingestion disabled, schedules initially detached, and verified backups.
+- Production: database mode, shared-secret allowlisted-owner authentication, authenticated job routes, fixtures disabled, Target/Walmart/Meijer pending sanctioned access, online unavailable, reviewed NECA public catalog explicitly enabled, retention scheduled, and verified backups. Reddit automation remains disabled pending explicit approval.
 
 Never let preview deployments poll live retailers automatically.
 
 ## Schedule starting point
 
-- Product discovery: twice daily per retailer.
+- Official NECA Store discovery: once daily in `.github/workflows/live-ingestion.yml` after the workflow reaches the default branch and its encrypted Actions secrets are provisioned. The official storefront currently returns `503` from Vercel egress, so do not move this job back to Vercel until a production smoke succeeds there.
 - Active-hunt availability: every 60–120 minutes, only when an approved source supports it and within rate limits.
-- Reddit crowd fetch: every 30–60 minutes or the permitted interval for the configured API plan.
+- Reddit public RSS: once daily on Vercel Hobby. OAuth/API access may use a permitted higher interval only after approval and a hosting-plan review.
 - Ranking refresh: event-driven after new evidence plus a daily decay refresh.
 
 Intervals are configuration, not constants. Back off on throttling and expose staleness.
@@ -35,7 +35,7 @@ Intervals are configuration, not constants. Back off on throttling and expose st
 4. Run migrations as a controlled release step.
 5. Seed retailers, local stores, source configuration, and the allowlisted user.
 6. Smoke-test the separate fixture-only preview at phone and desktop widths; production database mode must not serve synthetic catalog data.
-7. Configure one reviewed connector/source at a time using `OPERATIONS_RUNBOOK.md`. v0.1.0 ships no live connector, so production remains unavailable for all sources.
+7. Enable the reviewed NECA `public` connector, manually ingest/replay it, then enable Reddit `rss` and repeat. Keep every unimplemented retailer source unavailable.
 8. Run a manual ingestion, inspect counts and records, then enable its schedule.
 9. Enable alerts for repeated job failure and database capacity.
 
@@ -59,7 +59,7 @@ PREVIEW_BASE_URL=https://preview.example npm run test:preview
 
 The preview suite runs the read-only core pages in the 390px mobile and desktop projects, checks headings/titles, horizontal reflow, fixture labels, and serious/critical axe findings.
 
-Release-candidate fixture deployment: `https://shelf-radar.vercel.app`. Vercel assigned the first deployment its project production alias; this URL is still the public, read-only fixture profile, not the database-backed production configuration. The remote smoke suite passed 10/10 mobile and desktop cases on 2026-07-19.
+Owner production deployment: `https://shelf-radar.vercel.app`. It uses managed Neon PostgreSQL, fixtures off, owner Basic authentication, live NECA/Reddit connectors, and source-specific schedules. The authenticated production smoke suite covers mobile and desktop login enforcement, real catalog and public signal provenance, durable classification, listing detail, source health, and serious/critical axe findings.
 
 ## Domain and installability
 

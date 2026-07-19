@@ -8,7 +8,9 @@ import { runRegisteredSourceJob, scheduledRunKey } from "@/operations/run-source
 
 const sourceSchema = z.enum(SOURCE_KEYS);
 
-export async function POST(request: Request, { params }: { params: Promise<{ source: string }> }) {
+type RouteContext = { params: Promise<{ source: string }> };
+
+async function runSource(request: Request, { params }: RouteContext) {
   const env = parseEnv();
   if (!isAuthorizedJob(request, env)) return NextResponse.json({ error: "Unauthorized job request" }, { status: 401, headers: { "cache-control": "no-store" } });
   const parsedSource = sourceSchema.safeParse((await params).source);
@@ -20,3 +22,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ sou
   if (!result.acquired) return NextResponse.json({ error: "Source ingestion is already running" }, { status: 409, headers: { "retry-after": "60" } });
   return NextResponse.json({ source: parsedSource.data, runKey, status: result.value.status, counts: result.value.counts, message: result.value.message ?? null });
 }
+
+export const GET = runSource;
+export const POST = runSource;

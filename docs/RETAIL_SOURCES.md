@@ -8,7 +8,7 @@ Shelf Radar treats retailer data as time-stamped evidence, not proof that an ite
 | --- | --- | --- | --- | --- |
 | Walmart | Discovery and adapter-local listing detail; store signals when an approved payload supplies them | Fixture and explicit unavailable modes; approved-provider boundary only, no live connector | Validated UPC/GTIN plus namespaced `WALMART_ITEM_ID` | Exact labels map to observations; missing data is not interpreted as out of stock |
 | Meijer | Discovery and adapter-local listing detail; limited store signals | Fixture and explicit unavailable modes; approved-provider boundary only, no live connector | Validated UPC plus namespaced `MEIJER_SKU` | Weak labels map to `UNKNOWN`; absent observations remain absent |
-| NECA | Official/approved product discovery and adapter-local listing detail | Fixture and explicit unavailable modes; approved-provider boundary only, no live connector | Validated UPC, manufacturer SKU, and NECA retailer SKU | Online offers use `ONLINE_ONLY`, `PREORDER`, `OUT_OF_STOCK`, or `UNKNOWN`; no store claim |
+| NECA | Official product discovery and adapter-local listing detail | Fixture, unavailable, provider boundary, and reviewed public official-store catalog | Validated UPC when supplied, manufacturer SKU, and NECA retailer SKU | Online offers use `ONLINE_ONLY`, `PREORDER`, `OUT_OF_STOCK`, or `UNKNOWN`; no store claim |
 | BigBadToyStore (selected online source) | Discovery and adapter-local listing detail | Fixture-backed MVP proof; approved-provider boundary only, no live connector | Namespaced online `RETAILER_SKU`, plus validated GTIN if supplied | Online-only/preorder/out-of-stock/unknown only |
 
 The configured online extension is deliberately restricted to the compile-time `bigbadtoystore` allowlist entry and its approved hostnames. It is not an arbitrary URL or arbitrary-site scraper. Adding another source requires a reviewed allowlist/config entry, source schema, sanitized fixture, and contract tests.
@@ -20,8 +20,9 @@ Each concrete adapter accepts one of these modes:
 - `fixture`: deterministic sanitized payloads under `tests/fixtures/retail`; never performs network I/O.
 - `unavailable`: returns a structured `unavailable` result and states that cached data remains visible.
 - `provider`: accepts only an explicitly injected approved provider implementation. If none is injected, it returns `unavailable` rather than guessing an endpoint.
+- NECA-only `public`: reads the official NECA Store TMNT collection JSON documented by the store for unauthenticated agent browsing. It is compile-time host/path restricted and read-only.
 
-`WALMART_ADAPTER_MODE`, `MEIJER_ADAPTER_MODE`, `NECA_ADAPTER_MODE`, and `ONLINE_RETAIL_ADAPTER_MODE` select each source independently in development/test. `FIXTURE_INGESTION_ENABLED=false` disables every fixture selection. Production always registers these sources as unavailable until the lead wires an approved provider composition boundary. Enabling `LIVE_INGESTION_ENABLED` alone does not create or claim a connector.
+`WALMART_ADAPTER_MODE`, `MEIJER_ADAPTER_MODE`, `NECA_ADAPTER_MODE`, and `ONLINE_RETAIL_ADAPTER_MODE` select each source independently. `FIXTURE_INGESTION_ENABLED=false` disables every fixture selection. Production composes only the reviewed NECA `public` connector when both its source mode and `LIVE_INGESTION_ENABLED=true` are present. All generic provider modes remain unavailable without an injected implementation.
 
 An approved provider must be wired by the lead through a reviewed composition boundary. The adapter-local provider interface accepts `discover` and optional `fetchListing` operations and passes an abort signal, bounded query, request ID, and deterministic clock context.
 
@@ -58,6 +59,7 @@ Source payloads are validated with source-specific Zod schemas before normalizat
 - Walmart and Meijer store states can be incomplete or stale. A positive provider label is only an observation at its timestamp.
 - Meijer fixture data intentionally includes weak and missing availability and a listing without UPC.
 - NECA and online preorder/stock state is an online offer signal; it says nothing about local retailer shelves.
+- Shopify's `available` variant field is mapped only to `ONLINE_ONLY`; sold-out and preorder labels remain timestamped online observations, never local shelf claims.
 - Removed listings are retained as `REMOVED` history rather than deleted.
 - Duplicate replay is deterministic and relies on the existing listing/identifier/observation idempotency boundaries.
 - Raw payloads are not persisted by these adapters. Provenance uses a sanitized reference suitable for the existing retention policy; approved provider integrations must continue to redact sensitive fields.

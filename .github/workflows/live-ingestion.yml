@@ -1,0 +1,49 @@
+name: Live ingestion
+
+on:
+  schedule:
+    - cron: "15 10 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: live-ingestion
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  neca:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+    env:
+      NODE_ENV: production
+      APP_BASE_URL: https://shelf-radar.vercel.app
+      SHELF_RADAR_DATA_MODE: database
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      AUTH_MODE: shared-secret
+      AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
+      ALLOWED_USER_EMAIL: owner@shelfradar.app
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      LIVE_INGESTION_ENABLED: "true"
+      FIXTURE_INGESTION_ENABLED: "false"
+      TARGET_ADAPTER_MODE: unavailable
+      WALMART_ADAPTER_MODE: unavailable
+      MEIJER_ADAPTER_MODE: unavailable
+      NECA_ADAPTER_MODE: public
+      ONLINE_RETAIL_ADAPTER_MODE: unavailable
+      REDDIT_ADAPTER_MODE: unavailable
+      ADAPTER_MAX_PAGES_PER_RUN: "5"
+      ADAPTER_REQUEST_TIMEOUT_MS: "15000"
+      ADAPTER_MIN_REQUEST_INTERVAL_MS: "1000"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install --global npm@11.13.0
+      - run: npm ci
+      - name: Refresh official NECA catalog
+        run: npm run job:live -- neca

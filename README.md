@@ -1,6 +1,6 @@
 # Shelf Radar
 
-Shelf Radar is a mobile-first, single-user TMNT discovery and sourcing web app. The repository is at the v0.1.0 release-candidate stage after `m4-hunt-experience`, with fixture-backed Target, bounded retail discovery, Reddit/Ross crowd intelligence, transparent Hunts ranking, and production-safe operational boundaries.
+Shelf Radar is a mobile-first, single-user TMNT discovery and sourcing web app. The repository includes a reviewed live connector for the official NECA Store catalog, fixture-backed retailer contracts, cached Reddit/Ross crowd intelligence, transparent Hunts ranking, and production-safe operational boundaries.
 
 The app is deliberately careful with retailer data. Availability is stored as an append-only observation with a source and timestamp. It is not an inventory promise, and `SOURCE_UNAVAILABLE` is never rendered as out of stock.
 
@@ -10,21 +10,24 @@ The app is deliberately careful with retailer data. Availability is stored as an
 - Fixture/unavailable/provider boundaries for Walmart, Meijer, NECA, and an allowlisted online source, including exact cross-retailer UPC merging.
 - Fixture/unavailable/OAuth-boundary Reddit ingestion for TMNT, NECATMNT, ActionFigures, and RossFinds with sanitized excerpts, durable checkpoints, conservative product candidates, and provenance-preserving deduplication.
 - Integrated Discover, one-tap classification (`New`, `Hunt`, `Watch`, `Ignore`, `Own`), Product Detail, transparent Hunts leads, filterable crowd Signals, and owner source status.
+- Hunts now includes a field board for active products: named-store check cards, one-tap owner observations (`saw it`, `limited`, `checked none`, `checked unsure`), optional notes, last-check freshness, and direct retailer listing/search links.
 - Target identifiers remain namespaced; title-only candidates never auto-merge; exact-identifier conflicts enter `match_review_items`.
 - Versioned ranking vocabulary with visible positive, negative, and neutral factors. No probability percentages.
 - Ross crowd reports remain distinct from retailer inventory observations, with named-store, local, regional, national, and unknown scopes shown explicitly.
 - Full schema support for curated waves and later review workflows without claiming those capabilities are active.
-- Authenticated, non-overlapping scheduled-job routes, persisted source run health/counts, cached-data degradation, and raw-source retention.
-- Public read-only fixture preview support plus production owner authentication and live-ingestion kill switches.
+- Authenticated, non-overlapping scheduled-job routes, persisted source run health/counts, cached-data degradation, owner field-check observations, and raw-source retention.
+- Fixture preview support plus production owner authentication and live-ingestion kill switches.
 
-No live connector is shipped. Target, Walmart, Meijer, NECA, and online provider modes are extension points only. Reddit OAuth mode additionally requires explicit live enablement, approved credentials, and an injected approved-access client. Ross remains crowd-inventory only and never creates formal availability observations.
+The official NECA Store collection is the only currently sanctioned live connector. Target, Walmart, and Meijer are **Pending sanctioned access**; their fixtures/parser contracts are not production connectors. BigBadToyStore remains unavailable. Reddit's June 2026 access policy now requires explicit approval for automated access, so RSS is no longer automatically composed and persisted sightings are cached/stale until approved access is injected. Ross remains crowd-inventory only and never creates formal availability observations.
 
-Public fixture demo: [shelf-radar.vercel.app](https://shelf-radar.vercel.app). It is synthetic, read-only, and makes no retailer or social-network requests.
+Owner production app: [shelf-radar.vercel.app](https://shelf-radar.vercel.app). It is backed by managed PostgreSQL, requires the configured owner login, and displays persisted records from the live sources in the matrix below. Preview/local fixture mode remains synthetic and network-free.
 
 | Source | v0.1.0 production | Preview/local |
 | --- | --- | --- |
-| Target, Walmart, Meijer, NECA, BigBadToyStore | Unavailable; no connector shipped | Fixture-only |
-| Reddit / Ross Finds | Unavailable; OAuth boundary only | Fixture-only |
+| Target, Walmart, Meijer | Pending sanctioned access; no production connector | Synthetic fixture contracts only |
+| BigBadToyStore | Unavailable; no connector shipped | Fixture-only |
+| NECA Store | Live official online catalog (`public`) | Fixture-only |
+| Reddit / Ross Finds | Automated access blocked pending explicit Reddit approval; cached real sightings may remain readable | Fixture-only |
 
 ## Requirements
 
@@ -101,7 +104,7 @@ CI provisions disposable PostgreSQL and Chromium. No test or build contacts Targ
 - `drizzle`: committed SQL migrations
 - `tests`: unit, adapter, PostgreSQL, fixture, and Playwright coverage
 
-See [Product Brief](docs/PRODUCT_BRIEF.md), [Architecture](docs/ARCHITECTURE.md), [Release Traceability](docs/RELEASE_TRACEABILITY.md), [Operations Runbook](docs/OPERATIONS_RUNBOOK.md), [Security Review](docs/SECURITY_REVIEW.md), [UX states](docs/UX.md), [Acceptance Tests](docs/ACCEPTANCE_AND_TESTS.md), [Source Compliance](docs/SOURCE_COMPLIANCE.md), [Deployment](docs/DEPLOYMENT.md), and [Changelog](CHANGELOG.md).
+See [Product Brief](docs/PRODUCT_BRIEF.md), [Architecture](docs/ARCHITECTURE.md), [Source Feasibility](docs/SOURCE_FEASIBILITY.md), [Release Traceability](docs/RELEASE_TRACEABILITY.md), [Operations Runbook](docs/OPERATIONS_RUNBOOK.md), [Security Review](docs/SECURITY_REVIEW.md), [UX states](docs/UX.md), [Acceptance Tests](docs/ACCEPTANCE_AND_TESTS.md), [Source Compliance](docs/SOURCE_COMPLIANCE.md), [Deployment](docs/DEPLOYMENT.md), and [Changelog](CHANGELOG.md).
 
 ## Safety
 
@@ -112,6 +115,6 @@ See [Product Brief](docs/PRODUCT_BRIEF.md), [Architecture](docs/ARCHITECTURE.md)
 
 ## Release and operations status
 
-Production must start with database mode, owner/job secrets, fixtures off, global live ingestion off, and every source unavailable. Enable one source only after an approved connector is implemented and reviewed; configuration alone never makes a source live. Backup/restore, schedule, retention, source-enable and additive rollback procedures are in the operations runbook.
+Production runs in database mode with owner/job secrets and fixtures off. `NECA_ADAPTER_MODE=public` is the only approved live source mode. Reddit must be set to `unavailable`; its ingestion cron has been removed pending written approval, while the retention job remains scheduled. A daily GitHub Actions worker is prepared for NECA because the official storefront rejects Vercel-datacenter requests; it becomes active only after this workflow reaches the default branch and its three encrypted Actions secrets are explicitly authorized. Until then the persisted real NECA catalog remains usable but does not refresh automatically. Target, Walmart, and Meijer are pending sanctioned access; BigBadToyStore is unavailable. The production MVP release gate is not satisfied until at least one legitimate named-store availability source is connected and verified. Backup/restore, schedule, retention, source-enable, and additive rollback procedures are in the operations runbook.
 
 The release branch may be merged and tagged `v0.1.0` only after explicit authorization and green required CI. Automated wave detection remains excluded.
