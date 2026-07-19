@@ -59,6 +59,8 @@ PREVIEW_BASE_URL=https://preview.example npm run test:preview
 
 The preview suite runs the read-only core pages in the 390px mobile and desktop projects, checks headings/titles, horizontal reflow, fixture labels, and serious/critical axe findings.
 
+Release-candidate fixture deployment: `https://shelf-radar.vercel.app`. Vercel assigned the first deployment its project production alias; this URL is still the public, read-only fixture profile, not the database-backed production configuration. The remote smoke suite passed 10/10 mobile and desktop cases on 2026-07-19.
+
 ## Domain and installability
 
 Use a normal HTTPS domain. Add a web app manifest, icons, theme color, and safe-area-aware responsive layout so the site can be added to an iPhone home screen. A full offline/PWA data cache is not required; cached last-known signals with clear timestamps are sufficient.

@@ -57,6 +57,8 @@ DATABASE_URL="$SHELF_RADAR_RESTORE_URL" npm run db:migrate
 
 Record backup ID, timestamp, restore database, row counts, migration version and operator. Delete the temporary restore database through the provider console after evidence is retained.
 
+The 2026-07-19 release-candidate drill restored the 54 KB custom-format backup into the isolated local `shelf_radar_restore_verify` database, successfully replayed additive migrations, and matched all sampled source counts. This proves the repository procedure locally; managed production backups/PITR must still be enabled and tested with the selected database provider before real-data operation.
+
 ## Rollback
 
 1. Set `LIVE_INGESTION_ENABLED=false` and all modes unavailable; disable schedules.

@@ -19,6 +19,8 @@ The app is deliberately careful with retailer data. Availability is stored as an
 
 No live connector is shipped. Target, Walmart, Meijer, NECA, and online provider modes are extension points only. Reddit OAuth mode additionally requires explicit live enablement, approved credentials, and an injected approved-access client. Ross remains crowd-inventory only and never creates formal availability observations.
 
+Public fixture demo: [shelf-radar.vercel.app](https://shelf-radar.vercel.app). It is synthetic, read-only, and makes no retailer or social-network requests.
+
 | Source | v0.1.0 production | Preview/local |
 | --- | --- | --- |
 | Target, Walmart, Meijer, NECA, BigBadToyStore | Unavailable; no connector shipped | Fixture-only |

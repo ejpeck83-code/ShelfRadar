@@ -13,7 +13,7 @@ Material release surfaces are listed in `docs/RELEASE_TRACEABILITY.md`; the deta
 - No new migration was required; existing migrations remain additive.
 - Production now requires database mode, shared-secret owner auth, 32+ character owner/job secrets, fixtures off, global live ingestion off, and all sources unavailable.
 - Fresh migration and seed completed against local PostgreSQL 17 before the final query-only hardening: six retailers, five Target stores, and the local owner seed.
-- A 54 KB custom-format logical backup was created and `pg_restore --list` verified 123 TOC entries. Restoring into the isolated verification database was blocked when the desktop elevation quota expired, so restore completion remains a release gate.
+- A 54 KB custom-format logical backup was created and `pg_restore --list` verified 123 TOC entries. It restored cleanly into the isolated local `shelf_radar_restore_verify` database; additive migrations reapplied successfully. Source and restore counts matched exactly: 2 products, 0 listings, 0 observations, 9 crowd posts, 1 ingestion run, and 1 migration record.
 
 ## Exact validation results
 
@@ -30,7 +30,8 @@ Material release surfaces are listed in `docs/RELEASE_TRACEABILITY.md`; the deta
 - PR CI run 8 passed install, audit, migration, seed, lint, typecheck, unit/integration, build, Chromium install, and secret scanning. Its classification critical path exposed a non-production origin mismatch (`localhost` configuration versus Playwright's `127.0.0.1`); the owner-origin check now derives the actual request host outside production while retaining the configured-origin requirement in production.
 - PR CI run 9 passed both jobs completely, including gitleaks, fresh migration/seed, 109 unit tests, 8 PostgreSQL integration tests, production build, and 14 Playwright/axe cases; 10 preview-only project cases skipped as designed because CI exercised its managed local server.
 - Clean-clone `npm ci`: passed from commit `6887eef`; 405 packages installed. Clean-clone lint, typecheck, 108 unit tests, and production build all passed. The dependency override refinement made afterward requires one final CI install check.
-- Fixture preview deployment/smoke: not completed because no Vercel credentials are installed on this machine. The pinned Vercel CLI reached the device-login flow successfully; an owner must authenticate before deployment.
+- Fixture deployment: `https://shelf-radar.vercel.app`, built by Vercel with fixture defaults, no database, no schedules, no provider credentials, and live ingestion disabled. Vercel assigned the first project deployment its production alias; functionally it remains the public read-only fixture profile.
+- Remote preview smoke: 10/10 Playwright cases passed across mobile and desktop for Discover, Hunts, Signals, Status, and Product Detail, including serious/critical axe checks.
 
 ## Source matrix
 
@@ -43,7 +44,7 @@ Material release surfaces are listed in `docs/RELEASE_TRACEABILITY.md`; the deta
 
 ## Known limitations and gates
 
-DNS rebinding and edge rate limiting remain reviewed connector/hosting controls. Basic owner auth has no MFA/session UI. No production source is live. Restore verification, fixture preview deployment, and preview smoke remain release gates. Do not merge or tag until those gates are green and the user explicitly authorizes release.
+DNS rebinding and edge rate limiting remain reviewed connector/hosting controls. Basic owner auth has no MFA/session UI. No production source is live. All automated, deployment-smoke, and backup/restore gates are complete; do not merge or tag until the user explicitly authorizes release.
 
 ## Git
 
@@ -52,7 +53,7 @@ DNS rebinding and edge rate limiting remain reviewed connector/hosting controls.
 - Release implementation commit: `6887eef364a7b8abe3af027010b8b45b0b8efcc1`.
 - Dependency/audit follow-up commit: `91e9b988667e5c31ac917306ac2b3805cc9f57fe`.
 - Secret-scan false-positive commit: `e57059b31c6e9a84f905c8916270bfb322050ede`.
-- Current release head: `cf3915afa40de236a5b62a7ef6d3daa171d77d87`.
+- Current release code head before documentation-only evidence updates: `cf3915afa40de236a5b62a7ef6d3daa171d77d87`.
 - Pull request: `https://github.com/ejpeck83-code/ShelfRadar/pull/4` (CI green; mergeable; not merged).
 - Merge SHA: pending authorization.
 - Release tag: pending authorization (`v0.1.0`).

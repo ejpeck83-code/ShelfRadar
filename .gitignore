@@ -12,3 +12,4 @@ test-results/
 drizzle/meta/_journal.json.tmp
 Shelf-Radar-Codex-Handoff.docx
 shelf-radar-codex-handoff/
+.vercel
