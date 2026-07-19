@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, or } from "drizzle-orm";
 import type { RawListing } from "@/domain/adapters";
 import { identifierNamespace, normalizeIdentifier, type NormalizedIdentifier } from "@/domain/identifiers";
 import type { CatalogRepository, IngestionRunRecord } from "@/ingestion/contracts";
@@ -10,6 +10,8 @@ import { availabilityObservations, matchReviewItems, productIdentifiers, product
 import { finishPostgresIngestionRun, latestPostgresCheckpoint, startPostgresIngestionRun } from "./postgres-ingestion-runs";
 
 export class PostgresCatalogRepository implements CatalogRepository {
+  private readonly retailerIds = new Map<string, string>();
+
   constructor(private readonly db: ShelfRadarDb) {}
 
   async startRun(input: { sourceKey: string; jobType: string; runKey: string; parserVersion: string; startedAt: Date }): Promise<IngestionRunRecord> {
@@ -31,8 +33,13 @@ export class PostgresCatalogRepository implements CatalogRepository {
 
   async findMatchCandidates(listing: RawListing, retailerKey: string): Promise<MatchCandidate[]> {
     const incoming: NormalizedIdentifier[] = listing.identifiers.map((item: RawListing["identifiers"][number]) => normalizeIdentifier(item.kind, item.value)).filter((item: NormalizedIdentifier) => item.valid);
-    const rows = await this.db.select({ productId: productIdentifiers.productId, kind: productIdentifiers.kind, namespace: productIdentifiers.namespace, valueNormalized: productIdentifiers.valueNormalized }).from(productIdentifiers);
-    const ids = new Set(rows.filter((row) => incoming.some((item: NormalizedIdentifier) => item.kind === row.kind && item.valueNormalized === row.valueNormalized && identifierNamespace(item.kind, retailerKey) === row.namespace)).map((row) => row.productId));
+    if (!incoming.length) return [];
+    const rows = await this.db.select({ productId: productIdentifiers.productId, kind: productIdentifiers.kind, namespace: productIdentifiers.namespace, valueNormalized: productIdentifiers.valueNormalized }).from(productIdentifiers).where(or(...incoming.map((item) => and(
+      eq(productIdentifiers.kind, item.kind),
+      eq(productIdentifiers.valueNormalized, item.valueNormalized),
+      eq(productIdentifiers.namespace, identifierNamespace(item.kind, retailerKey))
+    ))));
+    const ids = new Set(rows.map((row) => row.productId));
     return [...ids].map((productId) => ({
       productId,
       identifiers: rows.filter((row) => row.productId === productId).map((row) => ({ kind: row.kind, valueNormalized: row.valueNormalized, ...(row.namespace.startsWith("global:") ? {} : { retailerKey: row.namespace.split(":")[0] }) }))
@@ -90,8 +97,11 @@ export class PostgresCatalogRepository implements CatalogRepository {
   }
 
   private async retailerId(key: string): Promise<string> {
+    const cached = this.retailerIds.get(key);
+    if (cached) return cached;
     const row = (await this.db.select({ id: retailers.id }).from(retailers).where(eq(retailers.key, key)).orderBy(desc(retailers.createdAt)).limit(1))[0];
     if (!row) throw new Error(`Retailer is not seeded: ${key}`);
+    this.retailerIds.set(key, row.id);
     return row.id;
   }
 }

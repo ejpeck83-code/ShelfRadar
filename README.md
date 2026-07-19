@@ -9,10 +9,11 @@ The app is deliberately careful with retailer data. Availability is stored as an
 - Target fixture discovery, canonical validation, normalization, exact-identifier matching, PostgreSQL persistence, and idempotent replay.
 - Fixture/unavailable/provider boundaries for Walmart, Meijer, NECA, and an allowlisted online source, including exact cross-retailer UPC merging.
 - Fixture/unavailable/OAuth-boundary Reddit ingestion for TMNT, NECATMNT, ActionFigures, and RossFinds with sanitized excerpts, durable checkpoints, conservative product candidates, and provenance-preserving deduplication.
-- Discover, one-tap classification (`New`, `Hunt`, `Watch`, `Ignore`, `Own`), Product Detail, a limited-evidence Hunts lead, Signals empty state, and owner source status.
+- Integrated Discover, one-tap classification (`New`, `Hunt`, `Watch`, `Ignore`, `Own`), Product Detail, transparent Hunts leads, filterable crowd Signals, and owner source status.
 - Target identifiers remain namespaced; title-only candidates never auto-merge; exact-identifier conflicts enter `match_review_items`.
 - Versioned ranking vocabulary with visible positive, negative, and neutral factors. No probability percentages.
-- Full schema support for later crowd sightings, Ross crowd-inventory, and curated waves without enabling those capabilities.
+- Ross crowd reports remain distinct from retailer inventory observations, with named-store, local, regional, national, and unknown scopes shown explicitly.
+- Full schema support for curated waves and later review workflows without claiming those capabilities are active.
 
 No live connector is shipped. Target, Walmart, Meijer, NECA, and online provider modes are extension points only. Reddit OAuth mode additionally requires explicit live enablement, approved credentials, and an injected approved-access client. Ross remains crowd-inventory only and never creates formal availability observations.
 
@@ -80,7 +81,8 @@ CI provisions disposable PostgreSQL and Chromium. No test or build contacts Targ
 
 - `src/domain`: canonical Zod schemas, identifiers, adapter contracts
 - `src/db`: Drizzle schema, client, and catalog repositories
-- `src/adapters/retail`: Target fixture/unavailable/provider boundary and unavailable extension stubs
+- `src/adapters/retail`: Target, Walmart, Meijer, NECA, and allowlisted-online fixture/unavailable/provider boundaries
+- `src/adapters/crowd`: Reddit fixture/unavailable/OAuth boundary
 - `src/ingestion`: orchestration, run records, idempotency
 - `src/matching`: exact-identifier-first matching policy
 - `src/ranking`: versioned, transparent ordinal factors
@@ -89,11 +91,11 @@ CI provisions disposable PostgreSQL and Chromium. No test or build contacts Targ
 - `drizzle`: committed SQL migrations
 - `tests`: unit, adapter, PostgreSQL, fixture, and Playwright coverage
 
-See [Product Brief](docs/PRODUCT_BRIEF.md), [Architecture](docs/ARCHITECTURE.md), [Architecture Notes](docs/ARCHITECTURE_NOTES.md), [Acceptance Tests](docs/ACCEPTANCE_AND_TESTS.md), [Source Compliance](docs/SOURCE_COMPLIANCE.md), and [Deployment](docs/DEPLOYMENT.md).
+See [Product Brief](docs/PRODUCT_BRIEF.md), [Architecture](docs/ARCHITECTURE.md), [Architecture Notes](docs/ARCHITECTURE_NOTES.md), [UX states](docs/UX.md), [Acceptance Tests](docs/ACCEPTANCE_AND_TESTS.md), [Source Compliance](docs/SOURCE_COMPLIANCE.md), and [Deployment](docs/DEPLOYMENT.md).
 
 ## Safety
 
 - Keep live ingestion disabled until an approved connector, explicit flag, and credentials exist.
 - Never commit `.env`, production payloads, tokens, cookies, addresses, or browser artifacts.
 - Treat external payloads as untrusted data and validate with Zod before normalization.
-- Disable live ingestion by setting `LIVE_INGESTION_ENABLED=false` and `TARGET_ADAPTER_MODE=unavailable`.
+- Disable live ingestion globally with `LIVE_INGESTION_ENABLED=false`; set each source mode to `unavailable` when it should not serve fixtures.

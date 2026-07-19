@@ -52,4 +52,17 @@ describe("crowd ingestion orchestration", () => {
     expect(store.finishRun).toHaveBeenCalledWith(expect.objectContaining({ status: "FAILED" }));
     expect(store.finishRun.mock.calls[0]?.[0]).not.toHaveProperty("cursor");
   });
+
+  it("closes the ingestion run when an adapter throws unexpectedly", async () => {
+    const store = repository();
+    const adapter = {
+      sourceKey: "reddit",
+      parserVersion: "throwing-v1",
+      capabilities: ["crowd_posts"] as const,
+      async fetchPosts(): Promise<never> { throw new Error("untrusted provider detail"); }
+    };
+    const result = await runCrowdDiscovery({ adapter, repository: store, now, runKey: "crowd:first", terms: DEFAULT_CROWD_TERMS, queryTerms: ["TMNT"] });
+    expect(result).toMatchObject({ status: "FAILED", message: "Crowd adapter failed without a structured result", counts: { failed: 1 } });
+    expect(store.finishRun).toHaveBeenCalledWith(expect.objectContaining({ status: "FAILED" }));
+  });
 });

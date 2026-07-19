@@ -1,6 +1,7 @@
 import fixturePayload from "../../../../tests/fixtures/retail/target/discovery.json";
 import { rawListingSchema, type AdapterResult, type DiscoveryQuery, type RawListing, type RetailDiscoveryAdapter, type AdapterContext } from "@/domain/adapters";
 import type { AppEnv } from "@/config/env";
+import { callProvider, DEFAULT_ADAPTER_POLICY, validateDiscoveryQuery, type AdapterSafetyPolicy } from "../online/support";
 
 export const TARGET_PARSER_VERSION = "target-fixture-v1";
 
@@ -21,25 +22,27 @@ export class TargetAdapter implements RetailDiscoveryAdapter {
   readonly parserVersion = TARGET_PARSER_VERSION;
   readonly capabilities = ["product_discovery", "listing_detail", "store_availability"] as const;
 
-  constructor(private readonly mode: AppEnv["TARGET_ADAPTER_MODE"], private readonly provider?: TargetProvider) {}
+  constructor(private readonly mode: AppEnv["TARGET_ADAPTER_MODE"], private readonly provider?: TargetProvider, readonly policy: AdapterSafetyPolicy = DEFAULT_ADAPTER_POLICY) {}
 
   async discover(query: DiscoveryQuery, context: AdapterContext): Promise<AdapterResult<RawListing>> {
-    if (query.pageLimit < 1) return { kind: "malformed", reason: "pageLimit must be positive" };
+    const invalid = validateDiscoveryQuery(query, this.policy);
+    if (invalid) return invalid;
     if (context.signal.aborted) return { kind: "unavailable", reason: "request aborted" };
     if (this.mode === "fixture") return parseTargetPayload(fixturePayload);
     if (this.mode === "unavailable") {
       return { kind: "unavailable", reason: "Target live provider is not configured; cached data remains visible" };
     }
     if (!this.provider) return { kind: "unavailable", reason: "Target provider mode selected without an approved provider connector" };
-    try {
-      return parseTargetPayload(await this.provider.discover(query, context));
-    } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") return { kind: "unavailable", reason: "Target provider timed out" };
-      return { kind: "unavailable", reason: "Target provider request failed" };
-    }
+    const result = await callProvider((providerContext) => this.provider!.discover(query, providerContext), context, this.policy, "Target");
+    return result.kind === "payload" ? parseTargetPayload(result.payload) : result;
   }
 }
 
 export function createTargetAdapter(env: AppEnv, provider?: TargetProvider): TargetAdapter {
-  return new TargetAdapter(env.TARGET_ADAPTER_MODE, provider);
+  return new TargetAdapter(env.TARGET_ADAPTER_MODE, provider, {
+    ...DEFAULT_ADAPTER_POLICY,
+    maxPagesPerRequest: env.ADAPTER_MAX_PAGES_PER_RUN,
+    requestTimeoutMs: env.ADAPTER_REQUEST_TIMEOUT_MS,
+    minRequestIntervalMs: env.ADAPTER_MIN_REQUEST_INTERVAL_MS
+  });
 }

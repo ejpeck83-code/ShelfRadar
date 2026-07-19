@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { rawCrowdPostSchema, rawListingSchema } from "@/domain/adapters";
+import { TargetAdapter } from "@/adapters/retail/target";
 
 const listing = {
   externalId: "safe-1",
@@ -42,5 +43,21 @@ describe("canonical adapter URLs", () => {
     };
     expect(rawCrowdPostSchema.safeParse(crowdPost).success).toBe(true);
     expect(rawCrowdPostSchema.safeParse({ ...crowdPost, mediaUrl: "javascript:alert(1)" }).success).toBe(false);
+  });
+});
+
+describe("Target provider boundary", () => {
+  const context = () => ({ signal: new AbortController().signal, requestId: "target-boundary", now: new Date("2026-07-18T16:00:00.000Z") });
+
+  it("rejects discovery requests outside configured bounds", async () => {
+    const provider = { discover: async () => [] };
+    const adapter = new TargetAdapter("provider", provider);
+    await expect(adapter.discover({ terms: ["TMNT"], pageLimit: 6 }, context())).resolves.toMatchObject({ kind: "malformed" });
+  });
+
+  it("returns unavailable when an approved provider exceeds its timeout", async () => {
+    const provider = { discover: async (_query: unknown, providerContext: { signal: AbortSignal }) => new Promise((resolve) => providerContext.signal.addEventListener("abort", () => resolve([]), { once: true })) };
+    const adapter = new TargetAdapter("provider", provider, { maxPagesPerRequest: 5, requestTimeoutMs: 10, maxResponseBytes: 512_000, minRequestIntervalMs: 0, retryBackoffSeconds: [] });
+    await expect(adapter.discover({ terms: ["TMNT"], pageLimit: 1 }, context())).resolves.toEqual({ kind: "unavailable", reason: "Target approved provider timed out" });
   });
 });

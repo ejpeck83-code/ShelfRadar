@@ -34,4 +34,16 @@ describe("fixture ingestion", () => {
 
     expect(startRun).toHaveBeenCalledWith(expect.objectContaining({ parserVersion: "custom-retailer-v2" }));
   });
+  it("closes the ingestion run when an adapter throws unexpectedly", async () => {
+    const repository = new MemoryCatalogRepository();
+    const adapter = {
+      sourceKey: "throwing-retailer",
+      parserVersion: "throwing-v1",
+      capabilities: ["product_discovery"] as const,
+      async discover(): Promise<never> { throw new Error("untrusted provider detail"); }
+    };
+    const result = await runDiscovery({ adapter, repository, now: new Date("2026-07-18T16:00:00.000Z"), runKey: "throwing:first", terms: ["TMNT"] });
+    expect(result).toMatchObject({ status: "FAILED", message: "Retail adapter failed without a structured result", counts: { failed: 1 } });
+    expect(repository.runs.get("throwing:first")?.status).toBe("FAILED");
+  });
 });
