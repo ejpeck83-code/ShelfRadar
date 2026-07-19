@@ -9,6 +9,10 @@ for (const route of ["/discover", "/hunts", "/signals", "/status", "/products/2d
     await expect(page).toHaveTitle(/Shelf Radar/);
     await expect(page.locator("main h1")).toBeVisible();
     await expect(page.getByText(/fixture/i).first()).toBeVisible();
+    if (route === "/discover") {
+      await expect(page.getByText("Classification is disabled in the read-only fixture demo.").first()).toBeVisible();
+      await expect(page.getByRole("button", { name: "Hunt" }).first()).toBeDisabled();
+    }
     const results = await new AxeBuilder({ page }).analyze();
     expect(results.violations.filter((violation) => ["serious", "critical"].includes(violation.impact ?? ""))).toEqual([]);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);

@@ -2,7 +2,7 @@
 
 ## Outcome
 
-Prepared the post-`m4-hunt-experience` MVP release candidate: traceability and exclusion checks, source truth/status, authenticated operations, transactional ingestion, retention, ranking validation, cached degradation, security hardening, release documentation, and fixture-preview coverage. No live connector and no automated wave detection were added.
+Prepared the post-`m4-hunt-experience` MVP release candidate: traceability and exclusion checks, source truth/status, authenticated operations, transactional ingestion, retention, ranking validation, cached degradation, security hardening, release documentation, and fixture-preview coverage. The public fixture profile now labels and disables classification instead of presenting a production write action that cannot persist. Local and database-backed classification remain functional. No live connector and no automated wave detection were added.
 
 ## Files
 
@@ -19,19 +19,21 @@ Material release surfaces are listed in `docs/RELEASE_TRACEABILITY.md`; the deta
 
 - `npm run lint`: passed, 0 warnings.
 - `npm run typecheck`: passed.
-- `npm test`: 28 files passed, 108 tests passed.
+- `npm test`: 28 files passed, 109 tests passed.
 - `npm run build`: passed with Next.js 16.2.10; 11 application routes built.
 - `npm run demo:fixtures`: passed; first run created 3 products, replay created 0 and updated 3; 3 products, 3 listings, 4 append-only observations.
 - `npm audit`: passed, 0 vulnerabilities after pinning safe transitive `esbuild` resolutions for Drizzle Kit and Vite.
 - GitHub gitleaks initially flagged the synthetic owner secret in `tests/unit/proxy-auth.test.ts`; the exact finding fingerprint is now ignored without excluding the file or generic-secret rule.
 - PostgreSQL integration: 2 files / 8 tests passed before the final source-health query and retention no-op refinements. The current sandbox cannot reach the local service; PR CI must rerun the current commit.
 - Accessibility static contrast scan: 8/8 detected foreground/background pairs passed WCAG AA normal text. The source scanner reported layout/component false positives; the root layout owns the main landmark/skip link, wrapped labels name both selects, and `role=alert` supplies assertive live semantics.
-- Playwright: 14 critical-path cases could not launch Chromium locally because macOS denied MachPort bootstrap before any page assertion. PR CI/preview remains the required browser and axe result.
+- Local Playwright: 14/14 executable critical-path mobile/desktop cases passed; 10 remote-preview-only cases skipped as designed.
 - PR CI run 8 passed install, audit, migration, seed, lint, typecheck, unit/integration, build, Chromium install, and secret scanning. Its classification critical path exposed a non-production origin mismatch (`localhost` configuration versus Playwright's `127.0.0.1`); the owner-origin check now derives the actual request host outside production while retaining the configured-origin requirement in production.
 - PR CI run 9 passed both jobs completely, including gitleaks, fresh migration/seed, 109 unit tests, 8 PostgreSQL integration tests, production build, and 14 Playwright/axe cases; 10 preview-only project cases skipped as designed because CI exercised its managed local server.
-- Clean-clone `npm ci`: passed from commit `6887eef`; 405 packages installed. Clean-clone lint, typecheck, 108 unit tests, and production build all passed. The dependency override refinement made afterward requires one final CI install check.
+- PR CI run 11 passed both jobs completely, including gitleaks, `npm ci`, zero-vulnerability production audit, fresh migration/seed, lint, typecheck, 109 unit tests, 8 PostgreSQL integration tests, production build, and 14 Playwright/axe cases.
+- Clean-clone `npm ci`: passed with 404 packages and zero vulnerabilities. Clean-clone lint, typecheck, unit tests, and production build all passed.
 - Fixture deployment: `https://shelf-radar.vercel.app`, built by Vercel with fixture defaults, no database, no schedules, no provider credentials, and live ingestion disabled. Vercel assigned the first project deployment its production alias; functionally it remains the public read-only fixture profile.
-- Remote preview smoke: 10/10 Playwright cases passed across mobile and desktop for Discover, Hunts, Signals, Status, and Product Detail, including serious/critical axe checks.
+- Latest fixture deployment: `dpl_5xpSmGi4s9aEuXBgTQGnFGbLufE3`; inspect at `https://vercel.com/emery-pecks-projects/shelf-radar/5xpSmGi4s9aEuXBgTQGnFGbLufE3`.
+- Remote preview smoke: 10/10 Playwright cases passed across mobile and desktop for Discover, Hunts, Signals, Status, and Product Detail, including the read-only classification assertions and serious/critical axe checks.
 
 ## Source matrix
 
@@ -53,7 +55,7 @@ DNS rebinding and edge rate limiting remain reviewed connector/hosting controls.
 - Release implementation commit: `6887eef364a7b8abe3af027010b8b45b0b8efcc1`.
 - Dependency/audit follow-up commit: `91e9b988667e5c31ac917306ac2b3805cc9f57fe`.
 - Secret-scan false-positive commit: `e57059b31c6e9a84f905c8916270bfb322050ede`.
-- Current release code head before documentation-only evidence updates: `cf3915afa40de236a5b62a7ef6d3daa171d77d87`.
+- Latest pushed release head before the read-only preview follow-up: `d3e3e205ce075150f0e910601f2512e582c86566`.
 - Pull request: `https://github.com/ejpeck83-code/ShelfRadar/pull/4` (CI green; mergeable; not merged).
 - Merge SHA: pending authorization.
 - Release tag: pending authorization (`v0.1.0`).
