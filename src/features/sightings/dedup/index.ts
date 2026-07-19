@@ -41,7 +41,7 @@ export function buildEvidenceGroups(posts: readonly RawCrowdPost[]): EvidenceGro
     }
     evidenceGroupKey ??= `reddit:${post.externalPostId}`;
     byExternalId.set(post.externalPostId, evidenceGroupKey);
-    byExternalId.set(post.fullname, evidenceGroupKey);
+    byExternalId.set(post.sourceRecordKey, evidenceGroupKey);
     byContentHash.set(fingerprint.contentHash, evidenceGroupKey);
     tokenSets.set(evidenceGroupKey, new Set(fingerprint.tokens));
     groups.push({ post, evidenceGroupKey, ...(duplicateReason ? { duplicateReason } : {}) });

@@ -103,4 +103,13 @@ The adapter performs no unbounded retry. A scheduler should persist the checkpoi
 - Alias and text rules can confuse brand discussion with a real shelf sighting; ambiguous mappings remain in review.
 - National and regional activity may raise awareness but cannot establish local inventory.
 
+## Lead integration decisions
+
+- Canonical `CrowdSourceAdapter`, `CrowdQuery`, and raw crowd-post schemas now live in `src/domain/adapters.ts`; source record keys remain generic rather than exposing Reddit fullname terminology.
+- Ingestion runs now carry source parser versions and durable cursors. The prior Reddit checkpoint remains authoritative when persistence fails, and PostgreSQL integration tests cover the complete fetch → persist → checkpoint chain.
+- `REDDIT_ADAPTER_MODE` is validated centrally. OAuth mode requires explicit live enablement plus configured credentials, while the registry remains unavailable until an approved-access client is injected.
+- Accepted sightings map into the existing versioned ranking vocabulary through a pure crowd-evidence boundary; no new weights or probability language were introduced.
+- Ross store rows are not seeded speculatively. Named/local evidence retains its public city/scope while `storeId` remains empty until an authoritative public store mapping is reviewed.
+- Curated aliases remain a read-only matching extension point. No alias table or automatic title merge was added.
+
 Facebook, Instagram, TikTok, Discord, screenshot OCR, broad image recognition, and ML inference are intentionally out of scope.

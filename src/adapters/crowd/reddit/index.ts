@@ -1,6 +1,9 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
-import type { AdapterCapability, AdapterContext, AdapterResult } from "@/domain/adapters";
+import { httpUrlSchema, rawCrowdPostSchema, type AdapterContext, type AdapterResult, type CrowdQuery, type CrowdSourceAdapter, type RawCrowdPost } from "@/domain/adapters";
+
+export { rawCrowdPostSchema } from "@/domain/adapters";
+export type { CrowdQuery, CrowdSourceAdapter, RawCrowdPost } from "@/domain/adapters";
 
 export const REDDIT_PARSER_VERSION = "reddit-v1";
 export const DEFAULT_REDDIT_COMMUNITIES = ["TMNT", "NECATMNT", "ActionFigures", "RossFinds"] as const;
@@ -14,7 +17,7 @@ const redditPostSchema = z.object({
   permalink: z.string().startsWith("/r/").max(1_000),
   created_utc: z.number().finite().nonnegative(),
   author: z.string().max(120).optional(),
-  url_overridden_by_dest: z.string().url().max(2_000).optional(),
+  url_overridden_by_dest: httpUrlSchema.optional(),
   post_hint: z.string().max(80).optional(),
   crosspost_parent: z.string().max(140).optional(),
   removed_by_category: z.string().nullable().optional()
@@ -27,38 +30,6 @@ const redditListingSchema = z.object({
     children: z.array(z.object({ kind: z.literal("t3"), data: redditPostSchema })).max(250)
   })
 });
-
-export const rawCrowdPostSchema = z.object({
-  externalPostId: z.string().min(1).max(128),
-  fullname: z.string().min(1).max(140),
-  permalink: z.url(),
-  community: z.string().min(1).max(100),
-  title: z.string().min(1).max(500),
-  bodyExcerpt: z.string().max(500).optional(),
-  authorDisplay: z.string().max(120).optional(),
-  postedAt: z.iso.datetime(),
-  fetchedAt: z.iso.datetime(),
-  parentOrCrosspostId: z.string().max(140).optional(),
-  mediaEvidence: z.enum(["NONE", "PHOTO_LINK", "VIDEO_LINK", "UNKNOWN"]),
-  mediaUrl: z.url().optional(),
-  contentHash: z.string().length(64),
-  provenance: z.object({
-    sourceKey: z.literal("reddit"),
-    externalId: z.string().min(1),
-    fetchedAt: z.iso.datetime(),
-    parserVersion: z.literal(REDDIT_PARSER_VERSION),
-    rawRef: z.string().min(1).max(300)
-  })
-});
-
-export type RawCrowdPost = z.infer<typeof rawCrowdPostSchema>;
-export type CrowdQuery = { terms: string[]; checkpoint?: string; pageLimit: number; pageSize?: number };
-
-export interface CrowdSourceAdapter {
-  readonly sourceKey: string;
-  readonly capabilities: readonly AdapterCapability[];
-  fetchPosts(query: CrowdQuery, context: AdapterContext): Promise<AdapterResult<RawCrowdPost>>;
-}
 
 export type RedditPageResponse =
   | { kind: "success"; payload: unknown }
@@ -136,7 +107,7 @@ function parsePage(payload: unknown, fetchedAt: Date): ParsedPage {
     const contentHash = hash(`${title.toLowerCase()}\n${bodyExcerpt.toLowerCase()}\n${media.mediaUrl ?? ""}`);
     const candidate: RawCrowdPost = {
       externalPostId: data.id,
-      fullname,
+      sourceRecordKey: fullname,
       permalink: `https://www.reddit.com${data.permalink}`,
       community: data.subreddit,
       title,
@@ -180,6 +151,7 @@ function decodeRedditCheckpoint(checkpoint: string | undefined): string | undefi
 
 export class RedditCrowdAdapter implements CrowdSourceAdapter {
   readonly sourceKey = "reddit";
+  readonly parserVersion = REDDIT_PARSER_VERSION;
   readonly capabilities = ["crowd_posts"] as const;
   readonly communities: readonly string[];
   private readonly maxPagesPerRun: number;
@@ -232,7 +204,7 @@ export class RedditCrowdAdapter implements CrowdSourceAdapter {
       newestFullname ??= parsed.fullnames[0];
       const checkpointIndex = priorCheckpoint ? parsed.fullnames.indexOf(priorCheckpoint) : -1;
       const allowedIds = checkpointIndex >= 0 ? new Set(parsed.fullnames.slice(0, checkpointIndex)) : undefined;
-      items.push(...parsed.result.items.filter((post) => (!allowedIds || allowedIds.has(post.fullname)) && matchesQueryTerms(post, terms)));
+      items.push(...parsed.result.items.filter((post) => (!allowedIds || allowedIds.has(post.sourceRecordKey)) && matchesQueryTerms(post, terms)));
       if (checkpointIndex >= 0 || !parsed.after) break;
       after = parsed.after;
     }

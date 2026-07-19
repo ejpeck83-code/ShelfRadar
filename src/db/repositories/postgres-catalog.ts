@@ -6,23 +6,22 @@ import type { CatalogRepository, IngestionRunRecord } from "@/ingestion/contract
 import { ingestionIdempotencyKey } from "@/ingestion/run-discovery";
 import type { MatchCandidate } from "@/matching/match-product";
 import type { ShelfRadarDb } from "../client";
-import { availabilityObservations, ingestionRuns, matchReviewItems, productIdentifiers, products, retailerListings, retailers, stores } from "../schema";
+import { availabilityObservations, matchReviewItems, productIdentifiers, products, retailerListings, retailers, stores } from "../schema";
+import { finishPostgresIngestionRun, latestPostgresCheckpoint, startPostgresIngestionRun } from "./postgres-ingestion-runs";
 
 export class PostgresCatalogRepository implements CatalogRepository {
   constructor(private readonly db: ShelfRadarDb) {}
 
-  async startRun(input: { sourceKey: string; runKey: string; parserVersion: string; startedAt: Date }): Promise<IngestionRunRecord> {
-    const inserted = await this.db.insert(ingestionRuns).values({ sourceKey: input.sourceKey, jobType: "product_discovery", startedAt: input.startedAt, status: "RUNNING", parserVersion: input.parserVersion, runKey: input.runKey }).onConflictDoNothing({ target: ingestionRuns.runKey }).returning();
-    const row = inserted[0] ?? (await this.db.select().from(ingestionRuns).where(eq(ingestionRuns.runKey, input.runKey)).limit(1))[0];
-    if (!row) throw new Error("Unable to create ingestion run");
-    return runFromRow(row);
+  async startRun(input: { sourceKey: string; jobType: string; runKey: string; parserVersion: string; startedAt: Date }): Promise<IngestionRunRecord> {
+    return startPostgresIngestionRun(this.db, input);
   }
 
   async finishRun(run: IngestionRunRecord): Promise<void> {
-    await this.db.update(ingestionRuns).set({
-      status: run.status, finishedAt: new Date(), fetchedCount: run.counts.fetched, parsedCount: run.counts.parsed, createdCount: run.counts.created,
-      updatedCount: run.counts.updated, ignoredCount: run.counts.ignored, failedCount: run.counts.failed, sanitizedMessage: run.message?.slice(0, 500) ?? null
-    }).where(eq(ingestionRuns.id, run.id));
+    await finishPostgresIngestionRun(this.db, run);
+  }
+
+  async latestCheckpoint(sourceKey: string, jobType: string): Promise<string | undefined> {
+    return latestPostgresCheckpoint(this.db, sourceKey, jobType);
   }
 
   async findProductByExternalListing(sourceKey: string, externalId: string): Promise<string | null> {
@@ -95,8 +94,4 @@ export class PostgresCatalogRepository implements CatalogRepository {
     if (!row) throw new Error(`Retailer is not seeded: ${key}`);
     return row.id;
   }
-}
-
-function runFromRow(row: typeof ingestionRuns.$inferSelect): IngestionRunRecord {
-  return { id: row.id, runKey: row.runKey, sourceKey: row.sourceKey, status: row.status, counts: { fetched: row.fetchedCount, parsed: row.parsedCount, created: row.createdCount, updated: row.updatedCount, ignored: row.ignoredCount, failed: row.failedCount }, ...(row.sanitizedMessage ? { message: row.sanitizedMessage } : {}) };
 }

@@ -1,11 +1,12 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { eq, sql } from "drizzle-orm";
 import fixturePage from "../fixtures/crowd/reddit/posts.json";
-import { parseRedditPage } from "@/adapters/crowd/reddit";
+import { parseRedditPage, RedditCrowdAdapter } from "@/adapters/crowd/reddit";
 import { createDatabase } from "@/db/client";
-import { availabilityObservations, crowdPosts, productIdentifiers, products, retailers, sightingProductCandidates, sightings } from "@/db/schema";
-import { DEFAULT_CROWD_TERMS } from "@/features/sightings/parser";
+import { availabilityObservations, crowdPosts, ingestionRuns, productIdentifiers, products, retailers, sightingProductCandidates, sightings } from "@/db/schema";
+import { buildRedditQueryTerms, DEFAULT_CROWD_TERMS } from "@/features/sightings/parser";
 import { PostgresCrowdSightingRepository, ingestCrowdPosts } from "@/features/sightings/parser/persistence";
+import { runCrowdDiscovery } from "@/ingestion/run-crowd-discovery";
 
 const url = process.env.TEST_DATABASE_URL;
 describe.skipIf(!url)("PostgreSQL crowd sighting integration", () => {
@@ -13,7 +14,7 @@ describe.skipIf(!url)("PostgreSQL crowd sighting integration", () => {
   const now = new Date("2026-07-18T18:00:00.000Z");
 
   beforeAll(async () => {
-    await database.db.execute(sql`truncate table products, retailers restart identity cascade`);
+    await database.db.execute(sql`truncate table products, retailers, ingestion_runs restart identity cascade`);
     await database.db.insert(retailers).values([
       { key: "ross", name: "Ross Dress for Less", kind: "CROWD_INVENTORY" },
       { key: "target", name: "Target", kind: "PHYSICAL_AND_ONLINE" },
@@ -46,5 +47,24 @@ describe.skipIf(!url)("PostgreSQL crowd sighting integration", () => {
     expect(await database.db.select().from(availabilityObservations)).toHaveLength(0);
     const ross = (await database.db.select().from(retailers).where(eq(retailers.key, "ross")))[0]!;
     expect((await database.db.select().from(sightings).where(eq(sightings.retailerId, ross.id))).some((sighting) => sighting.locationScope === "NATIONAL")).toBe(true);
+  });
+
+  it("records a successful run and commits its checkpoint after durable replay", async () => {
+    const repository = new PostgresCrowdSightingRepository(database.db);
+    const adapter = new RedditCrowdAdapter({ mode: "fixture", fixturePages: [fixturePage] });
+    const run = await runCrowdDiscovery({
+      adapter,
+      repository,
+      now,
+      runKey: "crowd:postgres:first",
+      terms: DEFAULT_CROWD_TERMS,
+      queryTerms: buildRedditQueryTerms(DEFAULT_CROWD_TERMS),
+      pageLimit: 2
+    });
+
+    expect(run).toMatchObject({ status: "SUCCEEDED", cursor: "reddit:v1:t3_ross_local_1" });
+    expect(await database.db.select().from(ingestionRuns).where(eq(ingestionRuns.runKey, "crowd:postgres:first"))).toMatchObject([
+      { status: "SUCCEEDED", cursor: "reddit:v1:t3_ross_local_1", parserVersion: "reddit-v1" }
+    ]);
   });
 });

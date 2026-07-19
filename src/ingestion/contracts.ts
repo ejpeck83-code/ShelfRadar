@@ -2,11 +2,26 @@ import type { RawListing } from "@/domain/adapters";
 import type { MatchCandidate } from "@/matching/match-product";
 
 export type IngestionCounts = { fetched: number; parsed: number; created: number; updated: number; ignored: number; failed: number };
-export type IngestionRunRecord = { id: string; runKey: string; sourceKey: string; status: "RUNNING" | "SUCCEEDED" | "PARTIAL" | "FAILED" | "SKIPPED"; counts: IngestionCounts; message?: string };
+export type IngestionRunRecord = {
+  id: string;
+  runKey: string;
+  sourceKey: string;
+  jobType: string;
+  parserVersion: string;
+  startedAt: Date;
+  status: "RUNNING" | "SUCCEEDED" | "PARTIAL" | "FAILED" | "SKIPPED";
+  counts: IngestionCounts;
+  cursor?: string;
+  message?: string;
+};
 
-export interface CatalogRepository {
-  startRun(input: { sourceKey: string; runKey: string; parserVersion: string; startedAt: Date }): Promise<IngestionRunRecord>;
+export interface IngestionRunRepository {
+  startRun(input: { sourceKey: string; jobType: string; runKey: string; parserVersion: string; startedAt: Date }): Promise<IngestionRunRecord>;
   finishRun(run: IngestionRunRecord): Promise<void>;
+  latestCheckpoint(sourceKey: string, jobType: string): Promise<string | undefined>;
+}
+
+export interface CatalogRepository extends IngestionRunRepository {
   findProductByExternalListing(sourceKey: string, externalId: string): Promise<string | null>;
   findMatchCandidates(listing: RawListing, retailerKey: string): Promise<MatchCandidate[]>;
   createProductFromListing(listing: RawListing): Promise<string>;

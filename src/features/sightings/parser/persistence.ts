@@ -6,10 +6,12 @@ import { buildEvidenceGroups, fingerprintCrowdPost } from "../dedup";
 import { extractSighting, type CrowdTermConfig, type SightingExtraction } from ".";
 import { matchSightingCandidates, type CrowdProductRecord, type SightingCandidate } from "./match-candidates";
 import { ingestionIdempotencyKey } from "@/ingestion/run-discovery";
+import type { IngestionRunRecord, IngestionRunRepository } from "@/ingestion/contracts";
+import { finishPostgresIngestionRun, latestPostgresCheckpoint, startPostgresIngestionRun } from "@/db/repositories/postgres-ingestion-runs";
 
 export type CrowdIngestionCounts = { fetched: number; postsCreated: number; sightingsCreated: number; duplicateEvidence: number; candidatesCreated: number };
 
-export interface CrowdSightingRepository {
+export interface CrowdSightingRepository extends IngestionRunRepository {
   loadProductCandidates(): Promise<CrowdProductRecord[]>;
   persistPost(post: RawCrowdPost): Promise<{ id: string; created: boolean }>;
   persistSighting(input: { postId: string; extraction: SightingExtraction; evidenceGroupKey: string; candidates: readonly SightingCandidate[]; reviewRequired: boolean }): Promise<{ created: boolean; candidateCount: number }>;
@@ -17,6 +19,18 @@ export interface CrowdSightingRepository {
 
 export class PostgresCrowdSightingRepository implements CrowdSightingRepository {
   constructor(private readonly db: ShelfRadarDb) {}
+
+  async startRun(input: { sourceKey: string; jobType: string; runKey: string; parserVersion: string; startedAt: Date }): Promise<IngestionRunRecord> {
+    return startPostgresIngestionRun(this.db, input);
+  }
+
+  async finishRun(run: IngestionRunRecord): Promise<void> {
+    await finishPostgresIngestionRun(this.db, run);
+  }
+
+  async latestCheckpoint(sourceKey: string, jobType: string): Promise<string | undefined> {
+    return latestPostgresCheckpoint(this.db, sourceKey, jobType);
+  }
 
   async loadProductCandidates(): Promise<CrowdProductRecord[]> {
     const productRows = await this.db.select({ id: products.id, canonicalName: products.canonicalName, brand: products.brand, line: products.line, characters: products.characters }).from(products);

@@ -55,6 +55,25 @@ export const rawListingSchema = z.object({
 export type AdapterCapability = z.infer<typeof adapterCapabilitySchema>;
 export type RawListing = z.infer<typeof rawListingSchema>;
 
+export const rawCrowdPostSchema = z.object({
+  externalPostId: z.string().min(1).max(128),
+  sourceRecordKey: z.string().min(1).max(140),
+  permalink: httpUrlSchema,
+  community: z.string().min(1).max(100),
+  title: z.string().min(1).max(500),
+  bodyExcerpt: z.string().max(500).optional(),
+  authorDisplay: z.string().max(120).optional(),
+  postedAt: z.iso.datetime(),
+  fetchedAt: z.iso.datetime(),
+  parentOrCrosspostId: z.string().max(140).optional(),
+  mediaEvidence: z.enum(["NONE", "PHOTO_LINK", "VIDEO_LINK", "UNKNOWN"]),
+  mediaUrl: httpUrlSchema.optional(),
+  contentHash: z.string().regex(/^[a-f0-9]{64}$/),
+  provenance: provenanceSchema
+});
+
+export type RawCrowdPost = z.infer<typeof rawCrowdPostSchema>;
+
 export type AdapterResult<T> =
   | { kind: "success"; items: T[]; fetchedAt: string; nextCursor?: string }
   | { kind: "unavailable"; reason: string; retryAfter?: string }
@@ -64,6 +83,13 @@ export type AdapterResult<T> =
 export type DiscoveryQuery = { terms: string[]; cursor?: string; pageLimit: number };
 export const listingQuerySchema = z.object({ externalId: z.string().min(1).max(128) });
 export type ListingQuery = z.infer<typeof listingQuerySchema>;
+export const crowdQuerySchema = z.object({
+  terms: z.array(z.string().min(1).max(120)).max(100),
+  checkpoint: z.string().max(500).optional(),
+  pageLimit: z.number().int().min(1).max(20),
+  pageSize: z.number().int().min(1).max(100).optional()
+});
+export type CrowdQuery = z.infer<typeof crowdQuerySchema>;
 export type AdapterContext = { signal: AbortSignal; requestId: string; now: Date };
 
 export interface RetailDiscoveryAdapter {
@@ -72,4 +98,11 @@ export interface RetailDiscoveryAdapter {
   readonly capabilities: readonly AdapterCapability[];
   discover(query: DiscoveryQuery, context: AdapterContext): Promise<AdapterResult<RawListing>>;
   fetchListing?(query: ListingQuery, context: AdapterContext): Promise<AdapterResult<RawListing>>;
+}
+
+export interface CrowdSourceAdapter {
+  readonly sourceKey: string;
+  readonly parserVersion?: string;
+  readonly capabilities: readonly AdapterCapability[];
+  fetchPosts(query: CrowdQuery, context: AdapterContext): Promise<AdapterResult<RawCrowdPost>>;
 }
