@@ -28,10 +28,13 @@ No migration was added after the Target foundation migration. The existing migra
 
 Retail source modes and Reddit OAuth configuration were added to the existing validated environment contract. Live ingestion still requires the global flag, a source-specific provider/OAuth mode, approved credentials, and an injected approved connector. No secrets or live payloads were committed.
 
+The repository and CI now pin npm 11.13.0 so Linux CI consumes the lockfile with the same package-manager version that generated it.
+
 ## Final verification
 
 - `npm run lint`: passed, zero warnings.
 - `npm run typecheck`: passed.
+- `npm ci` with npm 11.13.0: passed; 405 packages installed from the committed lockfile.
 - `TEST_DATABASE_URL=postgresql://127.0.0.1:5432/shelf_radar_review npm test`: 20 files passed, 83 tests passed.
 - `TEST_DATABASE_URL=postgresql://127.0.0.1:5432/shelf_radar_review npm run test:integration`: 1 file passed, 3 tests passed.
 - `npm run test:e2e`: 12 tests passed across 390x844 mobile Chromium and desktop Chromium; axe found zero serious/critical violations on Discover, Hunts, Signals, Status, and Product Detail.
