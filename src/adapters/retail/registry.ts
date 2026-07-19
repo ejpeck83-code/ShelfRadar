@@ -1,15 +1,22 @@
 import type { AppEnv } from "@/config/env";
 import type { RetailDiscoveryAdapter } from "@/domain/adapters";
+import { MeijerAdapter } from "./meijer";
+import { NecaAdapter } from "./neca";
+import { ConfiguredOnlineRetailerAdapter } from "./online";
 import { createTargetAdapter } from "./target";
-import { UnavailableRetailAdapter } from "./unavailable";
+import { WalmartAdapter } from "./walmart";
 
 export function createRetailAdapterRegistry(env: AppEnv): ReadonlyMap<string, RetailDiscoveryAdapter> {
-  const unavailable = (key: string, label: string) => new UnavailableRetailAdapter(key, ["product_discovery", "listing_detail"], `${label} connector is not implemented in the Target milestone`);
+  const sourceMode = (configured: "fixture" | "unavailable" | "provider") => {
+    if (env.NODE_ENV === "production") return "unavailable" as const;
+    if (configured === "fixture" && !env.FIXTURE_INGESTION_ENABLED) return "unavailable" as const;
+    return configured;
+  };
   return new Map<string, RetailDiscoveryAdapter>([
-    ["target", createTargetAdapter(env)],
-    ["walmart", unavailable("walmart", "Walmart")],
-    ["meijer", unavailable("meijer", "Meijer")],
-    ["neca", unavailable("neca", "NECA")],
-    ["online", unavailable("online", "Online retailer")]
+    ["target", createTargetAdapter({ ...env, TARGET_ADAPTER_MODE: sourceMode(env.TARGET_ADAPTER_MODE) })],
+    ["walmart", new WalmartAdapter(sourceMode(env.WALMART_ADAPTER_MODE))],
+    ["meijer", new MeijerAdapter(sourceMode(env.MEIJER_ADAPTER_MODE))],
+    ["neca", new NecaAdapter(sourceMode(env.NECA_ADAPTER_MODE))],
+    ["online", new ConfiguredOnlineRetailerAdapter({ retailer: "bigbadtoystore", mode: sourceMode(env.ONLINE_RETAIL_ADAPTER_MODE) })]
   ]);
 }

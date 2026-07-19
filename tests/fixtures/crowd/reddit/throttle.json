@@ -1,0 +1,5 @@
+{
+  "kind": "throttled",
+  "retryAfter": "2026-07-18T18:05:00.000Z",
+  "note": "Synthetic adapter-contract outcome; never fetched from Reddit."
+}

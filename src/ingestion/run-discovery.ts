@@ -2,53 +2,76 @@ import { createHash } from "node:crypto";
 import type { RetailDiscoveryAdapter } from "@/domain/adapters";
 import { matchProduct } from "@/matching/match-product";
 import type { CatalogRepository, IngestionCounts, IngestionRunRecord } from "./contracts";
+import { sanitizeOperationalMessage } from "@/security/sanitize-operational-message";
 
 export type DiscoveryRunInput = { adapter: RetailDiscoveryAdapter; repository: CatalogRepository; now: Date; runKey: string; terms: string[]; pageLimit?: number };
 
 export async function runDiscovery(input: DiscoveryRunInput): Promise<IngestionRunRecord> {
   const counts: IngestionCounts = { fetched: 0, parsed: 0, created: 0, updated: 0, ignored: 0, failed: 0 };
-  const run = await input.repository.startRun({ sourceKey: input.adapter.sourceKey, runKey: input.runKey, parserVersion: "target-fixture-v1", startedAt: input.now });
+  const run = await input.repository.startRun({ sourceKey: input.adapter.sourceKey, jobType: "product_discovery", runKey: input.runKey, parserVersion: input.adapter.parserVersion ?? "unknown", startedAt: input.now });
   if (run.status !== "RUNNING") return run;
   const controller = new AbortController();
-  const result = await input.adapter.discover(
-    { terms: [...new Set(input.terms)].slice(0, 20), pageLimit: Math.min(input.pageLimit ?? 5, 5) },
-    { signal: controller.signal, requestId: input.runKey, now: input.now }
-  );
+  let result: Awaited<ReturnType<RetailDiscoveryAdapter["discover"]>>;
+  try {
+    result = await input.adapter.discover(
+      { terms: [...new Set(input.terms)].slice(0, 20), pageLimit: Math.min(input.pageLimit ?? 5, 5) },
+      { signal: controller.signal, requestId: input.runKey, now: input.now }
+    );
+  } catch {
+    return finishUnexpectedFailure(input.repository, run, counts, "Retail adapter failed without a structured result");
+  }
   if (result.kind !== "success") {
     run.status = result.kind === "malformed" ? "FAILED" : "SKIPPED";
-    run.message = result.kind === "throttled" ? "Source throttled" : result.reason;
+    run.message = result.kind === "throttled" ? "Source throttled" : sanitizeOperationalMessage(result.reason);
     run.counts = counts;
     await input.repository.finishRun(run);
     return run;
   }
 
-  counts.fetched = result.items.length;
-  for (const listing of result.items) {
-    counts.parsed += 1;
-    const existingListingProductId = await input.repository.findProductByExternalListing(input.adapter.sourceKey, listing.externalId);
-    let productId = existingListingProductId;
-    if (!productId) {
-      const candidates = await input.repository.findMatchCandidates(listing, input.adapter.sourceKey);
-      const decision = matchProduct(listing, candidates, input.adapter.sourceKey);
-      if (decision.kind === "review") {
-        await input.repository.createMatchReview({ sourceKey: input.adapter.sourceKey, externalListingId: listing.externalId, candidateProductIds: decision.candidateProductIds, reasonCode: decision.reason });
-        counts.failed += 1;
-        continue;
+  try {
+    counts.fetched = result.items.length;
+    await input.repository.inTransaction(async (repository) => {
+      for (const listing of result.items) {
+        counts.parsed += 1;
+        const existingListingProductId = await repository.findProductByExternalListing(input.adapter.sourceKey, listing.externalId);
+        let productId = existingListingProductId;
+        if (!productId) {
+          const candidates = await repository.findMatchCandidates(listing, input.adapter.sourceKey);
+          const decision = matchProduct(listing, candidates, input.adapter.sourceKey);
+          if (decision.kind === "review") {
+            await repository.createMatchReview({ sourceKey: input.adapter.sourceKey, externalListingId: listing.externalId, candidateProductIds: decision.candidateProductIds, reasonCode: decision.reason });
+            counts.failed += 1;
+            continue;
+          }
+          productId = decision.kind === "match" ? decision.productId : await repository.createProductFromListing(listing);
+          if (decision.kind === "create") counts.created += 1;
+        } else {
+          counts.updated += 1;
+        }
+        await repository.touchProduct(productId, new Date(listing.provenance.fetchedAt));
+        const savedListing = await repository.upsertListing(productId, input.adapter.sourceKey, listing);
+        if (savedListing.created && existingListingProductId) counts.updated += 1;
+        await repository.upsertIdentifiers(productId, input.adapter.sourceKey, savedListing.id, listing);
+        await repository.appendAvailability(savedListing.id, input.adapter.sourceKey, listing);
       }
-      productId = decision.kind === "match" ? decision.productId : await input.repository.createProductFromListing(listing);
-      if (decision.kind === "create") counts.created += 1;
-    } else {
-      counts.updated += 1;
-    }
-    await input.repository.touchProduct(productId, new Date(listing.provenance.fetchedAt));
-    const savedListing = await input.repository.upsertListing(productId, input.adapter.sourceKey, listing);
-    if (savedListing.created && existingListingProductId) counts.updated += 1;
-    await input.repository.upsertIdentifiers(productId, input.adapter.sourceKey, savedListing.id, listing);
-    await input.repository.appendAvailability(savedListing.id, input.adapter.sourceKey, listing);
+    });
+  } catch {
+    counts.created = 0;
+    counts.updated = 0;
+    return finishUnexpectedFailure(input.repository, run, counts, "Retail persistence failed; replay is safe with a new run key");
   }
   run.counts = counts;
   run.status = counts.failed === 0 ? "SUCCEEDED" : counts.created + counts.updated > 0 ? "PARTIAL" : "FAILED";
   await input.repository.finishRun(run);
+  return run;
+}
+
+async function finishUnexpectedFailure(repository: CatalogRepository, run: IngestionRunRecord, counts: IngestionCounts, message: string): Promise<IngestionRunRecord> {
+  counts.failed += 1;
+  run.counts = counts;
+  run.status = "FAILED";
+  run.message = message;
+  await repository.finishRun(run);
   return run;
 }
 

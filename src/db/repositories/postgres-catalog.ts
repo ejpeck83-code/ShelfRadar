@@ -1,28 +1,34 @@
 import { createHash } from "node:crypto";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, or } from "drizzle-orm";
 import type { RawListing } from "@/domain/adapters";
 import { identifierNamespace, normalizeIdentifier, type NormalizedIdentifier } from "@/domain/identifiers";
 import type { CatalogRepository, IngestionRunRecord } from "@/ingestion/contracts";
 import { ingestionIdempotencyKey } from "@/ingestion/run-discovery";
 import type { MatchCandidate } from "@/matching/match-product";
-import type { ShelfRadarDb } from "../client";
-import { availabilityObservations, ingestionRuns, matchReviewItems, productIdentifiers, products, retailerListings, retailers, stores } from "../schema";
+import type { ShelfRadarQueryDb } from "../client";
+import { availabilityObservations, matchReviewItems, productIdentifiers, products, retailerListings, retailers, stores } from "../schema";
+import { finishPostgresIngestionRun, latestPostgresCheckpoint, startPostgresIngestionRun } from "./postgres-ingestion-runs";
 
 export class PostgresCatalogRepository implements CatalogRepository {
-  constructor(private readonly db: ShelfRadarDb) {}
+  private readonly retailerIds = new Map<string, string>();
 
-  async startRun(input: { sourceKey: string; runKey: string; parserVersion: string; startedAt: Date }): Promise<IngestionRunRecord> {
-    const inserted = await this.db.insert(ingestionRuns).values({ sourceKey: input.sourceKey, jobType: "product_discovery", startedAt: input.startedAt, status: "RUNNING", parserVersion: input.parserVersion, runKey: input.runKey }).onConflictDoNothing({ target: ingestionRuns.runKey }).returning();
-    const row = inserted[0] ?? (await this.db.select().from(ingestionRuns).where(eq(ingestionRuns.runKey, input.runKey)).limit(1))[0];
-    if (!row) throw new Error("Unable to create ingestion run");
-    return runFromRow(row);
+  constructor(private readonly db: ShelfRadarQueryDb) {}
+
+  async inTransaction<T>(operation: (repository: CatalogRepository) => Promise<T>): Promise<T> {
+    if (!("$client" in this.db)) return operation(this);
+    return this.db.transaction(async (transaction) => operation(new PostgresCatalogRepository(transaction)));
+  }
+
+  async startRun(input: { sourceKey: string; jobType: string; runKey: string; parserVersion: string; startedAt: Date }): Promise<IngestionRunRecord> {
+    return startPostgresIngestionRun(this.db, input);
   }
 
   async finishRun(run: IngestionRunRecord): Promise<void> {
-    await this.db.update(ingestionRuns).set({
-      status: run.status, finishedAt: new Date(), fetchedCount: run.counts.fetched, parsedCount: run.counts.parsed, createdCount: run.counts.created,
-      updatedCount: run.counts.updated, ignoredCount: run.counts.ignored, failedCount: run.counts.failed, sanitizedMessage: run.message?.slice(0, 500) ?? null
-    }).where(eq(ingestionRuns.id, run.id));
+    await finishPostgresIngestionRun(this.db, run);
+  }
+
+  async latestCheckpoint(sourceKey: string, jobType: string): Promise<string | undefined> {
+    return latestPostgresCheckpoint(this.db, sourceKey, jobType);
   }
 
   async findProductByExternalListing(sourceKey: string, externalId: string): Promise<string | null> {
@@ -32,8 +38,13 @@ export class PostgresCatalogRepository implements CatalogRepository {
 
   async findMatchCandidates(listing: RawListing, retailerKey: string): Promise<MatchCandidate[]> {
     const incoming: NormalizedIdentifier[] = listing.identifiers.map((item: RawListing["identifiers"][number]) => normalizeIdentifier(item.kind, item.value)).filter((item: NormalizedIdentifier) => item.valid);
-    const rows = await this.db.select({ productId: productIdentifiers.productId, kind: productIdentifiers.kind, namespace: productIdentifiers.namespace, valueNormalized: productIdentifiers.valueNormalized }).from(productIdentifiers);
-    const ids = new Set(rows.filter((row) => incoming.some((item: NormalizedIdentifier) => item.kind === row.kind && item.valueNormalized === row.valueNormalized && identifierNamespace(item.kind, retailerKey) === row.namespace)).map((row) => row.productId));
+    if (!incoming.length) return [];
+    const rows = await this.db.select({ productId: productIdentifiers.productId, kind: productIdentifiers.kind, namespace: productIdentifiers.namespace, valueNormalized: productIdentifiers.valueNormalized }).from(productIdentifiers).where(or(...incoming.map((item) => and(
+      eq(productIdentifiers.kind, item.kind),
+      eq(productIdentifiers.valueNormalized, item.valueNormalized),
+      eq(productIdentifiers.namespace, identifierNamespace(item.kind, retailerKey))
+    ))));
+    const ids = new Set(rows.map((row) => row.productId));
     return [...ids].map((productId) => ({
       productId,
       identifiers: rows.filter((row) => row.productId === productId).map((row) => ({ kind: row.kind, valueNormalized: row.valueNormalized, ...(row.namespace.startsWith("global:") ? {} : { retailerKey: row.namespace.split(":")[0] }) }))
@@ -91,12 +102,11 @@ export class PostgresCatalogRepository implements CatalogRepository {
   }
 
   private async retailerId(key: string): Promise<string> {
+    const cached = this.retailerIds.get(key);
+    if (cached) return cached;
     const row = (await this.db.select({ id: retailers.id }).from(retailers).where(eq(retailers.key, key)).orderBy(desc(retailers.createdAt)).limit(1))[0];
     if (!row) throw new Error(`Retailer is not seeded: ${key}`);
+    this.retailerIds.set(key, row.id);
     return row.id;
   }
-}
-
-function runFromRow(row: typeof ingestionRuns.$inferSelect): IngestionRunRecord {
-  return { id: row.id, runKey: row.runKey, sourceKey: row.sourceKey, status: row.status, counts: { fetched: row.fetchedCount, parsed: row.parsedCount, created: row.createdCount, updated: row.updatedCount, ignored: row.ignoredCount, failed: row.failedCount }, ...(row.sanitizedMessage ? { message: row.sanitizedMessage } : {}) };
 }

@@ -1,0 +1,13 @@
+{
+  "enabled": false,
+  "note": "Copy reviewed entries into the deployment scheduler. Do not attach this manifest to previews. Every request uses Authorization: Bearer $CRON_SECRET.",
+  "jobs": [
+    { "source": "target", "path": "/api/jobs/ingest/target", "scheduleEnv": "DISCOVERY_CRON" },
+    { "source": "walmart", "path": "/api/jobs/ingest/walmart", "scheduleEnv": "DISCOVERY_CRON" },
+    { "source": "meijer", "path": "/api/jobs/ingest/meijer", "scheduleEnv": "DISCOVERY_CRON" },
+    { "source": "neca", "path": "/api/jobs/ingest/neca", "scheduleEnv": "DISCOVERY_CRON" },
+    { "source": "online", "path": "/api/jobs/ingest/online", "scheduleEnv": "DISCOVERY_CRON" },
+    { "source": "reddit", "path": "/api/jobs/ingest/reddit", "scheduleEnv": "CROWD_CRON" },
+    { "source": "retention", "path": "/api/jobs/retention", "scheduleEnv": "RETENTION_CRON" }
+  ]
+}

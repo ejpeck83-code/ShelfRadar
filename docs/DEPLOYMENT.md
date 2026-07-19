@@ -14,7 +14,7 @@ This is inexpensive, mobile-friendly, and operationally light while preserving a
 
 - Local: fixture adapters by default, local PostgreSQL, mock single user.
 - Preview: isolated or branched database where practical; fixture ingestion; no production schedules.
-- Production: explicit live-ingestion enable flags, approved credentials, schedules, backups, and allowlisted user authentication.
+- Production: database mode, shared-secret allowlisted-owner authentication, authenticated job routes, fixtures disabled, every source unavailable, live ingestion disabled, schedules initially detached, and verified backups.
 
 Never let preview deployments poll live retailers automatically.
 
@@ -34,8 +34,8 @@ Intervals are configuration, not constants. Back off on throttling and expose st
 3. Deploy with live ingestion disabled.
 4. Run migrations as a controlled release step.
 5. Seed retailers, local stores, source configuration, and the allowlisted user.
-6. Smoke-test fixture ingestion and UI.
-7. Configure one approved live source at a time.
+6. Smoke-test the separate fixture-only preview at phone and desktop widths; production database mode must not serve synthetic catalog data.
+7. Configure one reviewed connector/source at a time using `OPERATIONS_RUNBOOK.md`. v0.1.0 ships no live connector, so production remains unavailable for all sources.
 8. Run a manual ingestion, inspect counts and records, then enable its schedule.
 9. Enable alerts for repeated job failure and database capacity.
 
@@ -44,7 +44,22 @@ Intervals are configuration, not constants. Back off on throttling and expose st
 - Application deploys must be revertible independently of source schedules.
 - Prefer backward-compatible additive migrations. Destructive schema changes require a two-release expand/migrate/contract sequence.
 - A kill switch disables all live ingestion without disabling the read-only app.
+- Set `LIVE_INGESTION_ENABLED=false` for the global kill switch. If isolating one source, set its `*_ADAPTER_MODE=unavailable`; this is source uncertainty and must not be rendered as out of stock.
 - Retain the last known good deployment and a documented database restore test.
+
+The detailed PostgreSQL logical backup/restore drill, immutable application rollback, retention job, source kill switches, environment profiles, and disabled schedule manifest are in `docs/OPERATIONS_RUNBOOK.md` and `ops/schedules.production.example.json`. Current migrations are additive; rollback normally reverts the application while leaving the newer compatible schema in place.
+
+## Preview verification
+
+Deploy with fixture data only and no database/schedules/credentials. Then run:
+
+```bash
+PREVIEW_BASE_URL=https://preview.example npm run test:preview
+```
+
+The preview suite runs the read-only core pages in the 390px mobile and desktop projects, checks headings/titles, horizontal reflow, fixture labels, and serious/critical axe findings.
+
+Release-candidate fixture deployment: `https://shelf-radar.vercel.app`. Vercel assigned the first deployment its project production alias; this URL is still the public, read-only fixture profile, not the database-backed production configuration. The remote smoke suite passed 10/10 mobile and desktop cases on 2026-07-19.
 
 ## Domain and installability
 

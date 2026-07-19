@@ -17,11 +17,15 @@ export class MemoryCatalogRepository implements CatalogRepository {
   readonly runs = new Map<string, IngestionRunRecord>();
   readonly reviews = new Map<string, { candidateProductIds: string[]; reasonCode: string }>();
 
-  async startRun(input: { sourceKey: string; runKey: string }): Promise<IngestionRunRecord> {
+  async inTransaction<T>(operation: (repository: CatalogRepository) => Promise<T>): Promise<T> {
+    return operation(this);
+  }
+
+  async startRun(input: { sourceKey: string; jobType: string; runKey: string; parserVersion: string; startedAt: Date }): Promise<IngestionRunRecord> {
     const existing = this.runs.get(input.runKey);
     if (existing) return structuredClone(existing);
     const run: IngestionRunRecord = {
-      id: randomUUID(), runKey: input.runKey, sourceKey: input.sourceKey, status: "RUNNING",
+      id: randomUUID(), runKey: input.runKey, sourceKey: input.sourceKey, jobType: input.jobType, parserVersion: input.parserVersion, startedAt: input.startedAt, status: "RUNNING",
       counts: { fetched: 0, parsed: 0, created: 0, updated: 0, ignored: 0, failed: 0 }
     };
     this.runs.set(input.runKey, structuredClone(run));
@@ -29,6 +33,12 @@ export class MemoryCatalogRepository implements CatalogRepository {
   }
 
   async finishRun(run: IngestionRunRecord): Promise<void> { this.runs.set(run.runKey, structuredClone(run)); }
+
+  async latestCheckpoint(sourceKey: string, jobType: string): Promise<string | undefined> {
+    return [...this.runs.values()]
+      .filter((run) => run.sourceKey === sourceKey && run.jobType === jobType && run.status === "SUCCEEDED" && run.cursor)
+      .sort((left, right) => right.startedAt.getTime() - left.startedAt.getTime())[0]?.cursor;
+  }
 
   async findProductByExternalListing(sourceKey: string, externalId: string): Promise<string | null> {
     return [...this.listings.values()].find((listing) => listing.sourceKey === sourceKey && listing.externalId === externalId)?.productId ?? null;

@@ -1,4 +1,4 @@
-export const RANKING_RULES_VERSION = "target-v1.0.0";
+export const RANKING_RULES_VERSION = "mvp-v1.1.0";
 
 export type RankingEvidence = {
   reference: string;
@@ -6,6 +6,8 @@ export type RankingEvidence = {
   exactNamedStoreSighting?: boolean;
   exactPhoto?: boolean;
   exactText?: boolean;
+  lineWavePhoto?: boolean;
+  lineWaveText?: boolean;
   recentRetailPositive?: boolean;
   regionalRossActivity?: boolean;
   independentCorroborationCount?: number;
@@ -60,6 +62,8 @@ export function rankStore(input: RankingInput): RankingResult {
     if (evidence.exactNamedStoreSighting && age <= 24) add(evidence, "EXACT_NAMED_STORE_24H", 40, "Exact named-store sighting within 24 hours");
     if (evidence.exactPhoto && age <= 72) add(evidence, "EXACT_PRODUCT_PHOTO", 15, "Exact product photo evidence");
     if (evidence.exactText && age <= 72) add(evidence, "EXACT_PRODUCT_TEXT", 10, "Exact product text or identifier evidence");
+    if (evidence.lineWavePhoto && age <= 72) add(evidence, "LINE_OR_WAVE_PHOTO", 5, "Line or wave photo activity; weaker than exact product evidence");
+    if (evidence.lineWaveText && age <= 72) add(evidence, "LINE_OR_WAVE_TEXT", 2, "Line or wave text activity; weaker than exact product evidence");
     if (evidence.recentRetailPositive) {
       if (age <= 12) add(evidence, "RETAIL_POSITIVE_12H", 30, "Retailer reported in stock or limited within 12 hours");
       else if (age <= 36) add(evidence, "RETAIL_POSITIVE_36H", 15, "Retailer reported in stock or limited 12–36 hours ago");

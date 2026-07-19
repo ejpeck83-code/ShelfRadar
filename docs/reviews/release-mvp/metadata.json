@@ -1,0 +1,9 @@
+{
+  "base": "m4-hunt-experience",
+  "branch": "release/mvp",
+  "mode": "markdown local-apply",
+  "verdict": "ready_for_ci_with_applied_fixes",
+  "applied_findings": 7,
+  "open_blocking_findings": 0,
+  "report": "docs/reviews/release-mvp/report.md"
+}

@@ -1,0 +1,19 @@
+{
+  "kind": "success",
+  "fetchedAt": "2026-07-18T16:20:00.000Z",
+  "items": [
+    {
+      "retailerSku": "BBTS-NECA-54567",
+      "title": "NECA TMNT Mirage Comics Foot Ninja",
+      "url": "https://www.bigbadtoystore.com/Product/VariationDetails/300001",
+      "brand": "NECA",
+      "manufacturer": "NECA",
+      "line": "Mirage Comics",
+      "productType": "Action Figure",
+      "characters": ["Foot Ninja"],
+      "priceMinor": 3699,
+      "state": "preorder",
+      "onlineState": "preorder"
+    }
+  ]
+}
