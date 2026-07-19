@@ -1,0 +1,19 @@
+{
+  "kind": "success",
+  "fetchedAt": "2026-07-19T16:05:00.000Z",
+  "items": [
+    {
+      "itemId": "147258369",
+      "title": "NECA TMNT The Last Ronin Ultimate Leonardo",
+      "url": "https://www.walmart.com/ip/147258369",
+      "brand": "NECA",
+      "manufacturer": "NECA",
+      "line": "The Last Ronin",
+      "characters": ["Leonardo"],
+      "upc": "634482541333",
+      "price": { "amountMinor": 3299, "currency": "USD" },
+      "listingState": "active",
+      "availability": []
+    }
+  ]
+}
