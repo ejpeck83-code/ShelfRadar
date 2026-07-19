@@ -76,4 +76,4 @@ The first Playwright accessibility run found invalid description-list nesting ar
 
 ## Commit
 
-Implementation commit SHA will be added after validation. Branch: feature/hunt-experience.
+Implementation commit: a4867a13d4d999cb6bb72f27099a0a61b583336d. Branch: feature/hunt-experience.
