@@ -17,7 +17,7 @@ NECA public catalog is the only composed live connector. Cached database records
 
 Preview is read-only synthetic data: `NODE_ENV=production`, `SHELF_RADAR_DATA_MODE=fixture`, `FIXTURE_INGESTION_ENABLED=true`, `LIVE_INGESTION_ENABLED=false`, every adapter mode `fixture`. Do not configure `DATABASE_URL`, schedules, or provider credentials.
 
-Production uses `SHELF_RADAR_DATA_MODE=database`, `AUTH_MODE=shared-secret`, strong unique `AUTH_SECRET` and `CRON_SECRET`, one `ALLOWED_USER_EMAIL`, database URLs, `LIVE_INGESTION_ENABLED=true`, `FIXTURE_INGESTION_ENABLED=false`, `NECA_ADAPTER_MODE=public`, `REDDIT_ADAPTER_MODE=unavailable`, and every other source unavailable. Use HTTPS only. Store secrets in the platform secret manager.
+Production uses `SHELF_RADAR_DATA_MODE=database`, `AUTH_MODE=shared-secret`, strong unique `AUTH_SECRET` and `CRON_SECRET`, one `ALLOWED_USER_EMAIL` owner login value, database URLs, `LIVE_INGESTION_ENABLED=true`, `FIXTURE_INGESTION_ENABLED=false`, `NECA_ADAPTER_MODE=public`, `REDDIT_ADAPTER_MODE=unavailable`, and every other source unavailable. Use HTTPS only. Store secrets in the platform secret manager.
 
 ## Jobs and schedules
 

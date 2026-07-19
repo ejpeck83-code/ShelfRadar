@@ -6,6 +6,7 @@ const adapterMode = z.enum(["fixture", "unavailable", "provider"]);
 const necaAdapterMode = z.enum(["fixture", "unavailable", "provider", "public"]);
 const crowdAdapterMode = z.enum(["fixture", "unavailable", "oauth", "rss"]);
 const productionSecret = z.string().min(32).max(512);
+const ownerLogin = z.string().trim().min(1).max(200);
 const providerUrl = z.string().refine((value) => isPublicHttpUrl(value) && new URL(value).protocol === "https:", "must be a public HTTPS URL without embedded credentials");
 
 export const envSchema = z
@@ -43,7 +44,7 @@ export const envSchema = z
     SHELF_RADAR_DATA_MODE: z.enum(["database", "fixture"]).default("fixture"),
     AUTH_MODE: z.enum(["development", "shared-secret"]).default("development"),
     AUTH_SECRET: productionSecret.optional(),
-    ALLOWED_USER_EMAIL: z.email().optional()
+    ALLOWED_USER_EMAIL: ownerLogin.optional()
   })
   .superRefine((env, ctx) => {
     const providerModes = [env.TARGET_ADAPTER_MODE, env.WALMART_ADAPTER_MODE, env.MEIJER_ADAPTER_MODE, env.ONLINE_RETAIL_ADAPTER_MODE];

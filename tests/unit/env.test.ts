@@ -20,6 +20,17 @@ describe("environment safety", () => {
     expect(() => envSchema.parse(base)).toThrow();
     expect(envSchema.parse({ ...base, AUTH_SECRET: "a".repeat(32), CRON_SECRET: "b".repeat(32) })).toMatchObject({ AUTH_MODE: "shared-secret" });
   });
+  it("allows a non-email owner login for basic auth", () => {
+    expect(envSchema.parse({
+      NODE_ENV: "production",
+      SHELF_RADAR_DATA_MODE: "database",
+      DATABASE_URL: "postgresql://user:pass@db/test",
+      AUTH_MODE: "shared-secret",
+      AUTH_SECRET: "a".repeat(32),
+      ALLOWED_USER_EMAIL: "ejpeck83",
+      CRON_SECRET: "b".repeat(32)
+    })).toMatchObject({ ALLOWED_USER_EMAIL: "ejpeck83" });
+  });
   it("rejects private or credential-bearing provider endpoints", () => {
     const base = { TARGET_ADAPTER_MODE: "provider", LIVE_INGESTION_ENABLED: "true", TARGET_PROVIDER_API_KEY: "synthetic-key" };
     expect(() => envSchema.parse({ ...base, TARGET_PROVIDER_BASE_URL: "http://127.0.0.1/internal" })).toThrow();
