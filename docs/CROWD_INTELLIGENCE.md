@@ -8,13 +8,14 @@ Reddit titles, excerpts, links, and metadata are untrusted data. The parser neve
 
 ## Access modes
 
-`RedditCrowdAdapter` supports three explicit modes:
+`RedditCrowdAdapter` supports four explicit modes:
 
 - `fixture`: reads committed synthetic pages and makes no network requests.
 - `unavailable`: reports operational uncertainty while leaving cached sightings usable.
 - `oauth`: requires an injected approved-access client. `RedditOAuthClient` calls only `https://oauth.reddit.com`, sends a bearer token and descriptive user agent, bounds response size and page size, applies a request timeout and minimum interval, and surfaces `429` responses as `throttled` with retry guidance. It does not retry automatically.
+- `rss`: uses one combined, unauthenticated public subreddit Atom feed request. Reddit's published robots policy allows `/r/*.rss`. The transport is fixed to `www.reddit.com`, rejects redirects, validates community path components, bounds response bytes/time, rejects document-type/entity definitions, applies a minimum interval, and surfaces `429` without retrying.
 
-OAuth token acquisition and refresh remain outside this adapter-local module so client secrets and refresh tokens never enter payloads, fixtures, raw references, or logs. Live scheduling must remain disabled until the lead-owned environment validation requires explicit live enablement and approved credentials.
+OAuth token acquisition and refresh remain outside this adapter-local module so client secrets and refresh tokens never enter payloads, fixtures, raw references, or logs. RSS needs no credential, but environment validation still requires explicit global live enablement. Either live mode can be disabled independently while cached sightings remain readable.
 
 The configured communities are exactly:
 

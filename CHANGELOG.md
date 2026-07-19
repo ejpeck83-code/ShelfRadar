@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased — live production connectivity
+
+- Added persistent-production composition for the official NECA Store read-only catalog and robots-allowed Reddit subreddit RSS.
+- Added bounded fixed-host transports with redirect rejection, timeouts, response-size caps, Zod/XML validation, rate-limit outcomes, sanitized crowd content, and deterministic provenance.
+- Added daily source schedules: GitHub Actions for NECA discovery, plus Vercel Cron for Reddit sightings and retention. Job routes accept authenticated cookie-free cron `GET` requests as well as manual `POST` requests.
+- Enabled reviewed Shopify CDN product images while retaining a strict host/path allowlist.
+
 ## [Unreleased]
 
 - Release validation and any authorized post-v0.1.0 changes.

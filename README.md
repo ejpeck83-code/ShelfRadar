@@ -1,6 +1,6 @@
 # Shelf Radar
 
-Shelf Radar is a mobile-first, single-user TMNT discovery and sourcing web app. The repository is at the v0.1.0 release-candidate stage after `m4-hunt-experience`, with fixture-backed Target, bounded retail discovery, Reddit/Ross crowd intelligence, transparent Hunts ranking, and production-safe operational boundaries.
+Shelf Radar is a mobile-first, single-user TMNT discovery and sourcing web app. The repository now includes reviewed live connectors for the official NECA Store catalog and public Reddit subreddit RSS, alongside fixture-backed Target/retail contracts, Reddit/Ross crowd intelligence, transparent Hunts ranking, and production-safe operational boundaries.
 
 The app is deliberately careful with retailer data. Availability is stored as an append-only observation with a source and timestamp. It is not an inventory promise, and `SOURCE_UNAVAILABLE` is never rendered as out of stock.
 
@@ -15,16 +15,17 @@ The app is deliberately careful with retailer data. Availability is stored as an
 - Ross crowd reports remain distinct from retailer inventory observations, with named-store, local, regional, national, and unknown scopes shown explicitly.
 - Full schema support for curated waves and later review workflows without claiming those capabilities are active.
 - Authenticated, non-overlapping scheduled-job routes, persisted source run health/counts, cached-data degradation, and raw-source retention.
-- Public read-only fixture preview support plus production owner authentication and live-ingestion kill switches.
+- Fixture preview support plus production owner authentication and live-ingestion kill switches.
 
-No live connector is shipped. Target, Walmart, Meijer, NECA, and online provider modes are extension points only. Reddit OAuth mode additionally requires explicit live enablement, approved credentials, and an injected approved-access client. Ross remains crowd-inventory only and never creates formal availability observations.
+Two live read-only connectors are shipped and remain disabled unless database mode and the global live-ingestion flag are explicitly enabled: the official NECA Store collection JSON documented by the store for unauthenticated agent browsing, and Reddit's robots-allowed public subreddit RSS. Target, Walmart, Meijer, and BigBadToyStore provider modes remain extension points only. Reddit OAuth mode still requires approved credentials and an injected approved-access client. Ross remains crowd-inventory only and never creates formal availability observations.
 
-Public fixture demo: [shelf-radar.vercel.app](https://shelf-radar.vercel.app). It is synthetic, read-only, and makes no retailer or social-network requests.
+Owner production app: [shelf-radar.vercel.app](https://shelf-radar.vercel.app). It is backed by managed PostgreSQL, requires the configured owner login, and displays persisted records from the live sources in the matrix below. Preview/local fixture mode remains synthetic and network-free.
 
 | Source | v0.1.0 production | Preview/local |
 | --- | --- | --- |
-| Target, Walmart, Meijer, NECA, BigBadToyStore | Unavailable; no connector shipped | Fixture-only |
-| Reddit / Ross Finds | Unavailable; OAuth boundary only | Fixture-only |
+| Target, Walmart, Meijer, BigBadToyStore | Unavailable; no connector shipped | Fixture-only |
+| NECA Store | Live official online catalog (`public`) | Fixture-only |
+| Reddit / Ross Finds | Live public subreddit feed (`rss`); OAuth remains optional | Fixture-only |
 
 ## Requirements
 
@@ -112,6 +113,6 @@ See [Product Brief](docs/PRODUCT_BRIEF.md), [Architecture](docs/ARCHITECTURE.md)
 
 ## Release and operations status
 
-Production must start with database mode, owner/job secrets, fixtures off, global live ingestion off, and every source unavailable. Enable one source only after an approved connector is implemented and reviewed; configuration alone never makes a source live. Backup/restore, schedule, retention, source-enable and additive rollback procedures are in the operations runbook.
+Production runs in database mode with owner/job secrets and fixtures off. `NECA_ADAPTER_MODE=public` and `REDDIT_ADAPTER_MODE=rss` are enabled with the global live-ingestion flag. A daily GitHub Actions worker refreshes NECA because the official storefront currently rejects Vercel-datacenter requests; Vercel Cron refreshes Reddit and retention daily. Target, Walmart, Meijer, and BigBadToyStore remain unavailable. Backup/restore, schedule, retention, source-enable and additive rollback procedures are in the operations runbook.
 
 The release branch may be merged and tagged `v0.1.0` only after explicit authorization and green required CI. Automated wave detection remains excluded.
