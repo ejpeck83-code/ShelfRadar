@@ -27,6 +27,7 @@ Material release surfaces are listed in `docs/RELEASE_TRACEABILITY.md`; the deta
 - PostgreSQL integration: 2 files / 8 tests passed before the final source-health query and retention no-op refinements. The current sandbox cannot reach the local service; PR CI must rerun the current commit.
 - Accessibility static contrast scan: 8/8 detected foreground/background pairs passed WCAG AA normal text. The source scanner reported layout/component false positives; the root layout owns the main landmark/skip link, wrapped labels name both selects, and `role=alert` supplies assertive live semantics.
 - Playwright: 14 critical-path cases could not launch Chromium locally because macOS denied MachPort bootstrap before any page assertion. PR CI/preview remains the required browser and axe result.
+- PR CI run 8 passed install, audit, migration, seed, lint, typecheck, unit/integration, build, Chromium install, and secret scanning. Its classification critical path exposed a non-production origin mismatch (`localhost` configuration versus Playwright's `127.0.0.1`); the owner-origin check now derives the actual request host outside production while retaining the configured-origin requirement in production.
 - Clean-clone `npm ci`: passed from commit `6887eef`; 405 packages installed. Clean-clone lint, typecheck, 108 unit tests, and production build all passed. The dependency override refinement made afterward requires one final CI install check.
 - Preview deployment/smoke: not completed; publish is blocked with the same exhausted desktop elevation quota.
 

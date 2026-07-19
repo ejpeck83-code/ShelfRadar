@@ -19,7 +19,7 @@ export function isSameOriginMutation(request: Request, env?: AppEnv): boolean {
   const fetchSite = request.headers.get("sec-fetch-site");
   if (fetchSite && fetchSite !== "same-origin") return false;
   if (!origin) return fetchSite === "same-origin";
-  if (env) return origin === new URL(env.APP_BASE_URL).origin;
+  if (env?.NODE_ENV === "production") return origin === new URL(env.APP_BASE_URL).origin;
   const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
   const protocol = request.headers.get("x-forwarded-proto") ?? new URL(request.url).protocol.replace(":", "");
   if (!host) return false;
