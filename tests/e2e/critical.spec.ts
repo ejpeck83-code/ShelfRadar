@@ -8,7 +8,10 @@ test("discover -> classify Hunt -> Hunts -> detail -> Own", async ({ page }) => 
   await first.getByRole("button", { name: "Hunt" }).click();
   await expect(first.getByRole("button", { name: "Hunt" })).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("link", { name: "Hunts" }).click();
-  await expect(page.getByText("Target Fishers · Possible lead")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Field board" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Target Fishers", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Checked none" }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: /Search Target/ }).first()).toBeVisible();
   await expect(page.getByText("Ross Fishers report · Strong lead")).toBeVisible();
   await page.getByRole("link", { name: /Open NECA TMNT/ }).click();
   await expect(page.getByRole("heading", { name: /Ultimate Leonardo/ })).toBeVisible();
@@ -31,7 +34,9 @@ test("filters Ross signals without collapsing location scopes", async ({ page })
 test("detail exposes cross-retailer listings and degraded source truth", async ({ page }) => {
   await page.goto("/products/2d1f0d9e-06d4-4e61-b7f1-6d10442fda01");
   await expect(page.getByRole("heading", { name: "Retailer listings" })).toBeVisible();
-  await expect(page.getByRole("link", { name: /Open at Walmart/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Open Walmart/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Search Walmart/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Field check shortcuts" })).toBeVisible();
   await expect(page.getByText("Source unavailable")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Related public sightings" })).toBeVisible();
   await expect(page.getByText("Product match needs review").first()).toBeVisible();

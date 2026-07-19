@@ -47,3 +47,11 @@ In progress: convert the read-only fixture release candidate into a persistent s
 - Reddit's June 2026 Responsible Builder Policy requires explicit approval for automated access. Automatic RSS composition and the Vercel Reddit cron were removed. Existing persisted sightings remain readable as cached/stale evidence; no new Reddit requests should be made until written approval and an approved client are supplied.
 - NECA remains the only sanctioned live connector. Its persisted real data is usable, but automated refresh remains blocked until the prepared GitHub workflow reaches the default branch and its encrypted production secrets are authorized.
 - The MVP release gate is explicitly open: a functioning legitimate named-store integration must be connected and verified before release completion. Best Buy's public Products/Stores API is documented as the lowest-friction contingency, subject to user approval of retailer scope and its 72-hour cache/branding terms.
+
+## 2026-07-19 field-hunt correction
+
+- Reframed Hunts from a mostly passive ranked-evidence page into an active field board for products marked `HUNT`.
+- Added owner manual field checks as append-only `availability_observations` with `sourceKind=owner_manual_field_check`, `parserVersion=manual-v1`, idempotent mutation keys, optional sanitized notes, and existing same-origin owner authentication.
+- Added one-tap outcomes: `saw it`, `saw limited`, `checked none`, and `checked unsure`. These influence ranking through explicit owner-field factors and remain distinct from retailer inventory truth.
+- Added named-store check cards for configured physical stores, direct retailer listing/search links, and Product Detail field-check shortcuts.
+- Limitations: Target/Walmart/Meijer sanctioned access is still pending; direct links are user navigation aids, not live integrations; fixture mode remains read-only for manual field checks.

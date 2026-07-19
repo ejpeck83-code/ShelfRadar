@@ -10,11 +10,12 @@ The app is deliberately careful with retailer data. Availability is stored as an
 - Fixture/unavailable/provider boundaries for Walmart, Meijer, NECA, and an allowlisted online source, including exact cross-retailer UPC merging.
 - Fixture/unavailable/OAuth-boundary Reddit ingestion for TMNT, NECATMNT, ActionFigures, and RossFinds with sanitized excerpts, durable checkpoints, conservative product candidates, and provenance-preserving deduplication.
 - Integrated Discover, one-tap classification (`New`, `Hunt`, `Watch`, `Ignore`, `Own`), Product Detail, transparent Hunts leads, filterable crowd Signals, and owner source status.
+- Hunts now includes a field board for active products: named-store check cards, one-tap owner observations (`saw it`, `limited`, `checked none`, `checked unsure`), optional notes, last-check freshness, and direct retailer listing/search links.
 - Target identifiers remain namespaced; title-only candidates never auto-merge; exact-identifier conflicts enter `match_review_items`.
 - Versioned ranking vocabulary with visible positive, negative, and neutral factors. No probability percentages.
 - Ross crowd reports remain distinct from retailer inventory observations, with named-store, local, regional, national, and unknown scopes shown explicitly.
 - Full schema support for curated waves and later review workflows without claiming those capabilities are active.
-- Authenticated, non-overlapping scheduled-job routes, persisted source run health/counts, cached-data degradation, and raw-source retention.
+- Authenticated, non-overlapping scheduled-job routes, persisted source run health/counts, cached-data degradation, owner field-check observations, and raw-source retention.
 - Fixture preview support plus production owner authentication and live-ingestion kill switches.
 
 The official NECA Store collection is the only currently sanctioned live connector. Target, Walmart, and Meijer are **Pending sanctioned access**; their fixtures/parser contracts are not production connectors. BigBadToyStore remains unavailable. Reddit's June 2026 access policy now requires explicit approval for automated access, so RSS is no longer automatically composed and persisted sightings are cached/stale until approved access is injected. Ross remains crowd-inventory only and never creates formal availability observations.

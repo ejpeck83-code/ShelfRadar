@@ -5,6 +5,7 @@ import { availabilityObservations, productIdentifiers, products, retailerListing
 import { getFixtureProduct, listFixtureProducts } from "./fixture-store";
 import type { ProductView } from "./view-model";
 import { sourceStateFor, type SourceKey } from "@/features/sources/status";
+import { retailerActionLinks } from "@/features/retailer-links";
 
 const USER_ID = "local-owner";
 
@@ -19,12 +20,15 @@ export async function listProducts(): Promise<ProductView[]> {
       .innerJoin(retailerListings, eq(retailerListings.productId, products.id)).innerJoin(retailers, eq(retailers.id, retailerListings.retailerId)).orderBy(desc(products.firstDetectedAt));
     const productIds = rows.map((row) => row.product.id);
     const listingIds = rows.map((row) => row.listing.id);
-    const [ids, observations] = await Promise.all([
+    const retailerIds = [...new Set(rows.map((row) => row.listing.retailerId))];
+    const [ids, observations, fieldStores] = await Promise.all([
       productIds.length ? db.select().from(productIdentifiers).where(inArray(productIdentifiers.productId, productIds)) : Promise.resolve([]),
-      listingIds.length ? db.select({ observation: availabilityObservations, storeName: stores.name }).from(availabilityObservations).leftJoin(stores, eq(stores.id, availabilityObservations.storeId)).where(inArray(availabilityObservations.listingId, listingIds)).orderBy(desc(availabilityObservations.observedAt)) : Promise.resolve([])
+      listingIds.length ? db.select({ observation: availabilityObservations, storeName: stores.name }).from(availabilityObservations).leftJoin(stores, eq(stores.id, availabilityObservations.storeId)).where(inArray(availabilityObservations.listingId, listingIds)).orderBy(desc(availabilityObservations.observedAt)) : Promise.resolve([]),
+      retailerIds.length ? db.select().from(stores).where(inArray(stores.retailerId, retailerIds)) : Promise.resolve([])
     ]);
     const identifiersByProduct = groupBy(ids, (identifier) => identifier.productId);
     const observationsByListing = groupBy(observations, (item) => item.observation.listingId);
+    const storesByRetailer = groupBy(fieldStores.filter((store) => store.active), (store) => store.retailerId);
     const productRows = [...new Map(rows.map((row) => [row.product.id, row])).values()];
     return productRows.map((productRow) => ({
       id: productRow.product.id, name: productRow.product.canonicalName, brand: productRow.product.brand ?? "Unknown brand", line: productRow.product.line ?? "Unknown line", productType: productRow.product.productType ?? "Collectible", imageUrl: productRow.product.primaryImageUrl, firstDetectedAt: productRow.product.firstDetectedAt.toISOString(), state: productRow.state ?? "NEW",
@@ -37,7 +41,15 @@ export async function listProducts(): Promise<ProductView[]> {
         priceMinor: row.listing.priceMinor,
         status: row.listing.listingStatus,
         sourceState: sourceStateFor(env, row.retailerKey as SourceKey),
-        availability: (observationsByListing.get(row.listing.id) ?? []).map((item) => ({ status: item.observation.status, observedAt: item.observation.observedAt.toISOString(), storeName: item.storeName ?? `${row.retailerName} online`, sourceAvailable: item.observation.status !== "SOURCE_UNAVAILABLE" }))
+        fieldStores: (storesByRetailer.get(row.listing.retailerId) ?? []).map((store) => ({ id: store.id, name: store.name, city: store.city, region: store.region })),
+        actionLinks: retailerActionLinks({
+          retailerKey: row.retailerKey,
+          retailerName: row.retailerName,
+          listingUrl: row.listing.canonicalUrl,
+          productName: productRow.product.canonicalName,
+          identifiers: (identifiersByProduct.get(productRow.product.id) ?? []).map((id) => ({ kind: id.kind, value: id.valueDisplay }))
+        }),
+        availability: (observationsByListing.get(row.listing.id) ?? []).map((item) => ({ status: item.observation.status, observedAt: item.observation.observedAt.toISOString(), storeName: item.storeName ?? `${row.retailerName} online`, sourceAvailable: item.observation.status !== "SOURCE_UNAVAILABLE", sourceKind: item.observation.sourceKind, rawLabel: item.observation.rawLabel }))
       })),
       matchingSummary: productRow.product.normalizationStatus === "NEEDS_REVIEW" ? "Matching review required" : "Identifier-backed canonical product"
     }));

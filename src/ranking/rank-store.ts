@@ -1,4 +1,4 @@
-export const RANKING_RULES_VERSION = "mvp-v1.1.0";
+export const RANKING_RULES_VERSION = "mvp-v1.2.0";
 
 export type RankingEvidence = {
   reference: string;
@@ -14,6 +14,10 @@ export type RankingEvidence = {
   uncertainLocation?: boolean;
   likelyRepost?: boolean;
   sourceUnavailable?: boolean;
+  ownerSawProduct?: boolean;
+  ownerSawLimited?: boolean;
+  ownerCheckedNone?: boolean;
+  ownerCheckedUncertain?: boolean;
 };
 
 export type RankingInput = {
@@ -60,6 +64,13 @@ export function rankStore(input: RankingInput): RankingResult {
   for (const evidence of input.evidence) {
     const age = hoursBetween(input.calculatedAt, evidence.observedAt);
     if (evidence.exactNamedStoreSighting && age <= 24) add(evidence, "EXACT_NAMED_STORE_24H", 40, "Exact named-store sighting within 24 hours");
+    if (evidence.ownerSawProduct && age <= 24) add(evidence, "OWNER_SAW_PRODUCT_24H", 45, "Your field check saw this product within 24 hours");
+    if (evidence.ownerSawLimited && age <= 24) add(evidence, "OWNER_SAW_LIMITED_24H", 35, "Your field check saw limited quantity within 24 hours");
+    if (evidence.ownerCheckedNone) {
+      if (age <= 24) add(evidence, "OWNER_CHECKED_NONE_24H", -35, "Your field check found none within 24 hours");
+      else if (age <= 72) add(evidence, "OWNER_CHECKED_NONE_72H", -15, "Your field check found none within 72 hours");
+    }
+    if (evidence.ownerCheckedUncertain && age <= 24) add(evidence, "OWNER_CHECKED_UNCERTAIN_24H", 0, "Your field check was uncertain within 24 hours");
     if (evidence.exactPhoto && age <= 72) add(evidence, "EXACT_PRODUCT_PHOTO", 15, "Exact product photo evidence");
     if (evidence.exactText && age <= 72) add(evidence, "EXACT_PRODUCT_TEXT", 10, "Exact product text or identifier evidence");
     if (evidence.lineWavePhoto && age <= 72) add(evidence, "LINE_OR_WAVE_PHOTO", 5, "Line or wave photo activity; weaker than exact product evidence");

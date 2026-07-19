@@ -2,6 +2,8 @@
 
 ## Unreleased — live production connectivity
 
+- Added a mobile field-hunt board with named-store check cards, retailer listing/search links, owner manual observations, and 30-day remembered login support.
+- Added owner field-check ranking factors so recent `saw it`, `limited`, `checked none`, and `checked unsure` observations influence Hunt leads transparently without claiming retailer inventory truth.
 - Added persistent-production composition for the official NECA Store read-only catalog.
 - Added bounded fixed-host transports with redirect rejection, timeouts, response-size caps, Zod/XML validation, rate-limit outcomes, sanitized crowd content, and deterministic provenance.
 - Prepared a daily GitHub Actions NECA discovery worker and retained the authenticated Vercel retention schedule. Job routes accept authenticated cookie-free cron `GET` requests as well as manual `POST` requests.

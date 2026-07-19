@@ -1,7 +1,16 @@
 import type { ProductView } from "./view-model";
 import type { UserProductState } from "@/domain/catalog";
+import { retailerActionLinks } from "@/features/retailer-links";
 
-const fixtureProducts: ProductView[] = [
+const targetFieldStores = [
+  { id: "fixture-target-fishers", name: "Target Fishers", city: "Fishers", region: "IN" },
+  { id: "fixture-target-carmel", name: "Target Carmel", city: "Carmel", region: "IN" },
+  { id: "fixture-target-westfield", name: "Target Westfield", city: "Westfield", region: "IN" },
+  { id: "fixture-target-castleton", name: "Target Castleton", city: "Indianapolis", region: "IN" },
+  { id: "fixture-target-noblesville", name: "Target Noblesville", city: "Noblesville", region: "IN" }
+];
+
+const fixtureProducts: Array<Omit<ProductView, "listings"> & { listings: Array<Omit<ProductView["listings"][number], "fieldStores" | "actionLinks">> }> = [
   {
     id: "2d1f0d9e-06d4-4e61-b7f1-6d10442fda01", name: "NECA TMNT The Last Ronin Ultimate Leonardo", brand: "NECA", line: "The Last Ronin", productType: "Action Figure", imageUrl: "/products/fixture-last-ronin-leonardo.png", firstDetectedAt: "2026-07-18T16:00:00.000Z", state: "NEW",
     identifiers: [{ kind: "UPC", value: "634482541333" }, { kind: "DPCI", value: "087-16-7921" }, { kind: "TCIN", value: "91234567" }, { kind: "WALMART_ITEM_ID", value: "147258369" }, { kind: "MANUFACTURER_SKU", value: "54133" }],
@@ -47,10 +56,27 @@ const fixtureGlobal = globalThis as typeof globalThis & { __shelfRadarFixtureRun
 const runtime = fixtureGlobal.__shelfRadarFixtureRuntime ?? { states: new Map<string, UserProductState>(), mutations: new Set<string>() };
 fixtureGlobal.__shelfRadarFixtureRuntime = runtime;
 
-export function listFixtureProducts(): ProductView[] { return fixtureProducts.map((product) => ({ ...product, state: runtime.states.get(product.id) ?? product.state })); }
+export function listFixtureProducts(): ProductView[] { return fixtureProducts.map((product) => enrichFixtureProduct({ ...product, state: runtime.states.get(product.id) ?? product.state })); }
 export function getFixtureProduct(id: string): ProductView | null { return listFixtureProducts().find((product) => product.id === id) ?? null; }
 export function setFixtureProductState(productId: string, state: UserProductState, mutationId: string): void {
   if (runtime.mutations.has(mutationId)) return;
   if (!fixtureProducts.some((product) => product.id === productId)) throw new Error("Product not found");
   runtime.mutations.add(mutationId); runtime.states.set(productId, state);
+}
+
+function enrichFixtureProduct(product: (typeof fixtureProducts)[number]): ProductView {
+  return {
+    ...product,
+    listings: product.listings.map((listing) => ({
+      ...listing,
+      fieldStores: listing.retailerKey === "target" ? targetFieldStores : [],
+      actionLinks: retailerActionLinks({
+        retailerKey: listing.retailerKey,
+        retailerName: listing.retailer,
+        listingUrl: listing.url,
+        productName: product.name,
+        identifiers: product.identifiers
+      })
+    }))
+  };
 }
