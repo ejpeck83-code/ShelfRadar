@@ -5,7 +5,7 @@ import { availabilityObservations, productIdentifiers, products, retailerListing
 import { getFixtureProduct, listFixtureProducts } from "./fixture-store";
 import type { ProductView } from "./view-model";
 import { sourceStateFor, type SourceKey } from "@/features/sources/status";
-import { retailerActionLinks } from "@/features/retailer-links";
+import { retailerActionLinks, retailerSearchActionLink } from "@/features/retailer-links";
 
 const USER_ID = "local-owner";
 
@@ -41,13 +41,7 @@ export async function listProducts(): Promise<ProductView[]> {
         region: item.store.region,
         retailerKey: item.retailerKey,
         retailer: item.retailerName,
-        actionLinks: retailerActionLinks({
-          retailerKey: item.retailerKey,
-          retailerName: item.retailerName,
-          listingUrl: `https://www.target.com/s?searchTerm=${encodeURIComponent(productRow.product.canonicalName)}`,
-          productName: productRow.product.canonicalName,
-          identifiers: (identifiersByProduct.get(productRow.product.id) ?? []).map((id) => ({ kind: id.kind, value: id.valueDisplay }))
-        })
+        actionLinks: [retailerSearchActionLink(item.retailerKey, item.retailerName, productRow.product.canonicalName, (identifiersByProduct.get(productRow.product.id) ?? []).map((id) => ({ kind: id.kind, value: id.valueDisplay })))].filter((link) => link !== null)
       })),
       listings: rows.filter((row) => row.product.id === productRow.product.id).map((row) => ({
         id: row.listing.id,

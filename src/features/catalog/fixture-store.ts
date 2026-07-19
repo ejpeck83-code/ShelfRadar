@@ -1,6 +1,6 @@
 import type { ProductView } from "./view-model";
 import type { UserProductState } from "@/domain/catalog";
-import { retailerActionLinks } from "@/features/retailer-links";
+import { retailerActionLinks, retailerSearchActionLink } from "@/features/retailer-links";
 
 const targetFieldStores = [
   { id: "fixture-target-fishers", name: "Target Fishers", city: "Fishers", region: "IN" },
@@ -71,13 +71,7 @@ function enrichFixtureProduct(product: (typeof fixtureProducts)[number]): Produc
       ...store,
       retailerKey: "target",
       retailer: "Target",
-      actionLinks: retailerActionLinks({
-        retailerKey: "target",
-        retailerName: "Target",
-        listingUrl: `https://www.target.com/s?searchTerm=${encodeURIComponent(product.name)}`,
-        productName: product.name,
-        identifiers: product.identifiers
-      })
+      actionLinks: [retailerSearchActionLink("target", "Target", product.name, product.identifiers)].filter((link) => link !== null)
     })),
     listings: product.listings.map((listing) => ({
       ...listing,

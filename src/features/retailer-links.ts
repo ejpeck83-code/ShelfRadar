@@ -18,9 +18,18 @@ const SEARCH_URLS: Record<string, (query: string) => string> = {
 export function retailerActionLinks(input: RetailerLinkInput): RetailerActionLink[] {
   const links: RetailerActionLink[] = [{ label: `Open ${input.retailerName}`, url: input.listingUrl, kind: "listing" }];
   const query = preferredSearchQuery(input.productName, input.identifiers);
-  const searchUrl = SEARCH_URLS[input.retailerKey]?.(query);
+  const searchUrl = retailerSearchUrl(input.retailerKey, query);
   if (searchUrl && searchUrl !== input.listingUrl) links.push({ label: `Search ${input.retailerName}`, url: searchUrl, kind: "search" });
   return links;
+}
+
+export function retailerSearchActionLink(retailerKey: string, retailerName: string, productName: string, identifiers: Array<{ kind: string; value: string }>): RetailerActionLink | null {
+  const url = retailerSearchUrl(retailerKey, preferredSearchQuery(productName, identifiers));
+  return url ? { label: `Search ${retailerName}`, url, kind: "search" } : null;
+}
+
+export function retailerSearchUrl(retailerKey: string, query: string): string | null {
+  return SEARCH_URLS[retailerKey]?.(query) ?? null;
 }
 
 function preferredSearchQuery(productName: string, identifiers: Array<{ kind: string; value: string }>): string {
