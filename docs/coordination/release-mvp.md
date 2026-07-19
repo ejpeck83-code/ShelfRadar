@@ -23,6 +23,7 @@ Material release surfaces are listed in `docs/RELEASE_TRACEABILITY.md`; the deta
 - `npm run build`: passed with Next.js 16.2.10; 11 application routes built.
 - `npm run demo:fixtures`: passed; first run created 3 products, replay created 0 and updated 3; 3 products, 3 listings, 4 append-only observations.
 - `npm audit`: passed, 0 vulnerabilities after pinning safe transitive `esbuild` resolutions for Drizzle Kit and Vite.
+- GitHub gitleaks initially flagged the synthetic owner secret in `tests/unit/proxy-auth.test.ts`; the exact finding fingerprint is now ignored without excluding the file or generic-secret rule.
 - PostgreSQL integration: 2 files / 8 tests passed before the final source-health query and retention no-op refinements. The current sandbox cannot reach the local service; PR CI must rerun the current commit.
 - Accessibility static contrast scan: 8/8 detected foreground/background pairs passed WCAG AA normal text. The source scanner reported layout/component false positives; the root layout owns the main landmark/skip link, wrapped labels name both selects, and `role=alert` supplies assertive live semantics.
 - Playwright: 14 critical-path cases could not launch Chromium locally because macOS denied MachPort bootstrap before any page assertion. PR CI/preview remains the required browser and axe result.
