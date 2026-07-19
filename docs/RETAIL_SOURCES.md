@@ -21,7 +21,7 @@ Each concrete adapter accepts one of these modes:
 - `unavailable`: returns a structured `unavailable` result and states that cached data remains visible.
 - `provider`: accepts only an explicitly injected approved provider implementation. If none is injected, it returns `unavailable` rather than guessing an endpoint.
 
-The existing `FIXTURE_INGESTION_ENABLED` setting selects fixture versus unavailable mode at the registry extension point in development/test. Production always registers these sources as unavailable until the lead wires an approved provider composition boundary. No new environment variables were added because environment configuration is lead-owned. Enabling `LIVE_INGESTION_ENABLED` alone does not create or claim a connector.
+`WALMART_ADAPTER_MODE`, `MEIJER_ADAPTER_MODE`, `NECA_ADAPTER_MODE`, and `ONLINE_RETAIL_ADAPTER_MODE` select each source independently in development/test. `FIXTURE_INGESTION_ENABLED=false` disables every fixture selection. Production always registers these sources as unavailable until the lead wires an approved provider composition boundary. Enabling `LIVE_INGESTION_ENABLED` alone does not create or claim a connector.
 
 An approved provider must be wired by the lead through a reviewed composition boundary. The adapter-local provider interface accepts `discover` and optional `fetchListing` operations and passes an abort signal, bounded query, request ID, and deterministic clock context.
 
@@ -65,3 +65,5 @@ Source payloads are validated with source-specific Zod schemas before normalizat
 ## Fixture scenarios
 
 The sanitized fixtures cover new listings, preorder, missing UPC, changed price, removed listing, malformed payload, throttling, structured unavailability, and duplicate replay. Tests run entirely against fixtures or injected in-memory providers and make no live network calls.
+
+Run `npm run demo:retail-fixtures` to ingest and replay all registered retail fixtures and print the canonical product count for the UPC shared by Target and Walmart.

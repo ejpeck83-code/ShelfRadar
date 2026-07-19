@@ -93,6 +93,7 @@ export function parseMeijerPayload(payload: unknown, policy: AdapterSafetyPolicy
 
 export class MeijerAdapter implements RetailDiscoveryAdapter {
   readonly sourceKey = "meijer";
+  readonly parserVersion = MEIJER_PARSER_VERSION;
   readonly capabilities = ["product_discovery", "listing_detail", "store_availability"] as const;
   constructor(private readonly mode: RetailAdapterMode, private readonly provider?: ApprovedRetailProvider, readonly policy: AdapterSafetyPolicy = DEFAULT_ADAPTER_POLICY) {}
 

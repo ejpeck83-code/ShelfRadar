@@ -110,6 +110,7 @@ export function parseWalmartPayload(payload: unknown, policy: AdapterSafetyPolic
 
 export class WalmartAdapter implements RetailDiscoveryAdapter {
   readonly sourceKey = "walmart";
+  readonly parserVersion = WALMART_PARSER_VERSION;
   readonly capabilities = ["product_discovery", "listing_detail", "store_availability"] as const;
 
   constructor(

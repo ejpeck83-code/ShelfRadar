@@ -83,4 +83,21 @@ describe("retail adapter shared contract", () => {
     const production = createRetailAdapterRegistry(envSchema.parse({ NODE_ENV: "production", FIXTURE_INGESTION_ENABLED: "true", TARGET_ADAPTER_MODE: "unavailable" }));
     await expect(production.get("walmart")?.discover(query, context)).resolves.toMatchObject({ kind: "unavailable" });
   });
+
+  it("honors each source mode without turning unavailable into out of stock", async () => {
+    const registry = createRetailAdapterRegistry(envSchema.parse({
+      NODE_ENV: "test",
+      FIXTURE_INGESTION_ENABLED: "true",
+      TARGET_ADAPTER_MODE: "fixture",
+      WALMART_ADAPTER_MODE: "unavailable",
+      MEIJER_ADAPTER_MODE: "fixture",
+      NECA_ADAPTER_MODE: "provider",
+      ONLINE_RETAIL_ADAPTER_MODE: "unavailable"
+    }));
+
+    await expect(registry.get("walmart")?.discover(query, context)).resolves.toMatchObject({ kind: "unavailable" });
+    await expect(registry.get("meijer")?.discover(query, context)).resolves.toMatchObject({ kind: "success" });
+    await expect(registry.get("neca")?.discover(query, context)).resolves.toMatchObject({ kind: "unavailable" });
+    await expect(registry.get("online")?.discover(query, context)).resolves.toMatchObject({ kind: "unavailable" });
+  });
 });

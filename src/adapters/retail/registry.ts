@@ -7,12 +7,16 @@ import { createTargetAdapter } from "./target";
 import { WalmartAdapter } from "./walmart";
 
 export function createRetailAdapterRegistry(env: AppEnv): ReadonlyMap<string, RetailDiscoveryAdapter> {
-  const specialistMode = env.NODE_ENV !== "production" && env.FIXTURE_INGESTION_ENABLED ? "fixture" : "unavailable";
+  const sourceMode = (configured: "fixture" | "unavailable" | "provider") => {
+    if (env.NODE_ENV === "production") return "unavailable" as const;
+    if (configured === "fixture" && !env.FIXTURE_INGESTION_ENABLED) return "unavailable" as const;
+    return configured;
+  };
   return new Map<string, RetailDiscoveryAdapter>([
     ["target", createTargetAdapter(env)],
-    ["walmart", new WalmartAdapter(specialistMode)],
-    ["meijer", new MeijerAdapter(specialistMode)],
-    ["neca", new NecaAdapter(specialistMode)],
-    ["online", new ConfiguredOnlineRetailerAdapter({ retailer: "bigbadtoystore", mode: specialistMode })]
+    ["walmart", new WalmartAdapter(sourceMode(env.WALMART_ADAPTER_MODE))],
+    ["meijer", new MeijerAdapter(sourceMode(env.MEIJER_ADAPTER_MODE))],
+    ["neca", new NecaAdapter(sourceMode(env.NECA_ADAPTER_MODE))],
+    ["online", new ConfiguredOnlineRetailerAdapter({ retailer: "bigbadtoystore", mode: sourceMode(env.ONLINE_RETAIL_ADAPTER_MODE) })]
   ]);
 }

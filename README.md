@@ -38,6 +38,12 @@ npm run demo:fixtures
 
 The command ingests the Target fixture twice and prints counts proving that products, listings, and availability observations are not duplicated.
 
+To replay every registered retail fixture and verify exact cross-retailer UPC merging:
+
+```bash
+npm run demo:retail-fixtures
+```
+
 ## PostgreSQL migration and seed
 
 Create an empty database, set `DATABASE_URL` (and optionally `DATABASE_DIRECT_URL` for migrations), then run:

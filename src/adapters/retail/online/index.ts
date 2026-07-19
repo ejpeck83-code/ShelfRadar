@@ -81,6 +81,7 @@ export function parseOnlineRetailerPayload(retailer: OnlineRetailerKey, payload:
 
 export class ConfiguredOnlineRetailerAdapter implements RetailDiscoveryAdapter {
   readonly sourceKey = "online";
+  readonly parserVersion = ONLINE_PARSER_VERSION;
   readonly capabilities = ["product_discovery", "listing_detail"] as const;
   constructor(readonly config: OnlineRetailerConfig, private readonly provider?: ApprovedRetailProvider, readonly policy: AdapterSafetyPolicy = DEFAULT_ADAPTER_POLICY) {}
   async discover(query: DiscoveryQuery, context: AdapterContext): Promise<AdapterResult<RawListing>> {

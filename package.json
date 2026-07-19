@@ -21,6 +21,7 @@
     "db:migrate": "node --import tsx scripts/migrate.ts",
     "db:seed": "node --import tsx scripts/seed.ts",
     "demo:fixtures": "node --import tsx scripts/fixture-demo.ts",
+    "demo:retail-fixtures": "node --import tsx scripts/retail-fixture-demo.ts",
     "demo:web": "cross-env SHELF_RADAR_DATA_MODE=fixture next dev"
   },
   "dependencies": {

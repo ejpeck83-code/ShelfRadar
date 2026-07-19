@@ -3,6 +3,14 @@ import { availabilityStatusSchema, identifierKindSchema, listingStatusSchema } f
 
 export const adapterCapabilitySchema = z.enum(["product_discovery", "listing_detail", "store_availability", "crowd_posts"]);
 
+export const httpUrlSchema = z.string().max(2_048).refine((value) => {
+  try {
+    return ["http:", "https:"].includes(new URL(value).protocol);
+  } catch {
+    return false;
+  }
+}, "must be an HTTP(S) URL");
+
 export const rawIdentifierSchema = z.object({
   kind: identifierKindSchema,
   value: z.string().min(1).max(128),
@@ -20,8 +28,8 @@ export const provenanceSchema = z.object({
 export const rawListingSchema = z.object({
   externalId: z.string().min(1).max(128),
   title: z.string().min(1).max(300),
-  canonicalUrl: z.url(),
-  imageUrl: z.url().optional(),
+  canonicalUrl: httpUrlSchema,
+  imageUrl: httpUrlSchema.optional(),
   brand: z.string().max(120).optional(),
   manufacturer: z.string().max(120).optional(),
   line: z.string().max(120).optional(),
@@ -54,10 +62,14 @@ export type AdapterResult<T> =
   | { kind: "malformed"; reason: string; rawRef?: string };
 
 export type DiscoveryQuery = { terms: string[]; cursor?: string; pageLimit: number };
+export const listingQuerySchema = z.object({ externalId: z.string().min(1).max(128) });
+export type ListingQuery = z.infer<typeof listingQuerySchema>;
 export type AdapterContext = { signal: AbortSignal; requestId: string; now: Date };
 
 export interface RetailDiscoveryAdapter {
   readonly sourceKey: string;
+  readonly parserVersion?: string;
   readonly capabilities: readonly AdapterCapability[];
   discover(query: DiscoveryQuery, context: AdapterContext): Promise<AdapterResult<RawListing>>;
+  fetchListing?(query: ListingQuery, context: AdapterContext): Promise<AdapterResult<RawListing>>;
 }

@@ -1,4 +1,4 @@
-import type { AdapterContext, AdapterResult, DiscoveryQuery, RawListing } from "@/domain/adapters";
+import type { AdapterContext, AdapterResult, DiscoveryQuery, ListingQuery, RawListing } from "@/domain/adapters";
 
 export type RetailAdapterMode = "fixture" | "unavailable" | "provider";
 
@@ -18,7 +18,7 @@ export const DEFAULT_ADAPTER_POLICY: AdapterSafetyPolicy = {
   retryBackoffSeconds: [30, 120, 300]
 };
 
-export type ListingDetailQuery = { externalId: string };
+export type ListingDetailQuery = ListingQuery;
 
 export interface ApprovedRetailProvider {
   discover(query: DiscoveryQuery, context: AdapterContext): Promise<unknown>;

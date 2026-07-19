@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { TargetAdapter } from "@/adapters/retail/target";
 import { MemoryCatalogRepository } from "@/db/repositories/memory-catalog";
 import { runDiscovery } from "@/ingestion/run-discovery";
@@ -17,5 +17,21 @@ describe("fixture ingestion", () => {
     const first = await runDiscovery({ adapter, repository, now, runKey: "same", terms: ["TMNT"] });
     const same = await runDiscovery({ adapter, repository, now, runKey: "same", terms: ["TMNT"] });
     expect(same).toEqual(first); expect(repository.products.size).toBe(3);
+  });
+  it("records the adapter parser version on the ingestion run", async () => {
+    const repository = new MemoryCatalogRepository();
+    const startRun = vi.spyOn(repository, "startRun");
+    const adapter = {
+      sourceKey: "custom-retailer",
+      parserVersion: "custom-retailer-v2",
+      capabilities: ["product_discovery"] as const,
+      async discover() {
+        return { kind: "success" as const, items: [], fetchedAt: "2026-07-18T16:00:00.000Z" };
+      }
+    };
+
+    await runDiscovery({ adapter, repository, now: new Date("2026-07-18T16:00:00.000Z"), runKey: "custom:first", terms: ["TMNT"] });
+
+    expect(startRun).toHaveBeenCalledWith(expect.objectContaining({ parserVersion: "custom-retailer-v2" }));
   });
 });

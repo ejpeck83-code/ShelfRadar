@@ -84,6 +84,7 @@ export function parseNecaPayload(payload: unknown, policy: AdapterSafetyPolicy =
 
 export class NecaAdapter implements RetailDiscoveryAdapter {
   readonly sourceKey = "neca";
+  readonly parserVersion = NECA_PARSER_VERSION;
   readonly capabilities = ["product_discovery", "listing_detail"] as const;
   constructor(private readonly mode: RetailAdapterMode, private readonly provider?: ApprovedRetailProvider, readonly policy: AdapterSafetyPolicy = DEFAULT_ADAPTER_POLICY) {}
   async discover(query: DiscoveryQuery, context: AdapterContext): Promise<AdapterResult<RawListing>> {
