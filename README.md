@@ -113,6 +113,6 @@ See [Product Brief](docs/PRODUCT_BRIEF.md), [Architecture](docs/ARCHITECTURE.md)
 
 ## Release and operations status
 
-Production runs in database mode with owner/job secrets and fixtures off. `NECA_ADAPTER_MODE=public` and `REDDIT_ADAPTER_MODE=rss` are enabled with the global live-ingestion flag. A daily GitHub Actions worker refreshes NECA because the official storefront currently rejects Vercel-datacenter requests; Vercel Cron refreshes Reddit and retention daily. Target, Walmart, Meijer, and BigBadToyStore remain unavailable. Backup/restore, schedule, retention, source-enable and additive rollback procedures are in the operations runbook.
+Production runs in database mode with owner/job secrets and fixtures off. `NECA_ADAPTER_MODE=public` and `REDDIT_ADAPTER_MODE=rss` are enabled with the global live-ingestion flag. Vercel Cron refreshes Reddit and retention daily. A daily GitHub Actions worker is prepared for NECA because the official storefront rejects Vercel-datacenter requests; it becomes active only after this workflow reaches the default branch and its three encrypted Actions secrets are explicitly authorized. Until then the persisted real NECA catalog remains usable but does not refresh automatically. Target, Walmart, Meijer, and BigBadToyStore remain unavailable. Backup/restore, schedule, retention, source-enable and additive rollback procedures are in the operations runbook.
 
 The release branch may be merged and tagged `v0.1.0` only after explicit authorization and green required CI. Automated wave detection remains excluded.

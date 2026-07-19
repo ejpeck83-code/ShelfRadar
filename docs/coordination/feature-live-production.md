@@ -14,7 +14,7 @@ In progress: convert the read-only fixture release candidate into a persistent s
 
 - `NECA_ADAPTER_MODE=public` and `REDDIT_ADAPTER_MODE=rss` require `LIVE_INGESTION_ENABLED=true`.
 - Production uses database mode, fixtures off, strong owner/job secrets, and all other sources unavailable.
-- Vercel schedules Reddit and retention once daily. GitHub Actions schedules NECA once daily because the storefront returns `503` from Vercel egress; both paths use the canonical services and PostgreSQL leases.
+- Vercel schedules Reddit and retention once daily. A GitHub Actions NECA schedule is prepared because the storefront returns `503` from Vercel egress; it remains inactive until the workflow reaches the default branch and encrypted Actions secret transfer is explicitly authorized.
 - Managed Neon PostgreSQL is provisioned, migrated, seeded, and connected to Vercel. Strong owner/job secrets are stored in Vercel and the macOS login Keychain; no secret or production payload is committed.
 
 ## Verification so far
@@ -35,4 +35,6 @@ In progress: convert the read-only fixture release candidate into a persistent s
 ## Git
 
 - Branch: `feature/live-production`
-- Commit SHA: pending cohesive implementation commit.
+- Implementation commit: `efeebd0`.
+- Operations documentation commit: `d66d133`.
+- Final coordination-only commit and branch HEAD are reported in the PR/completion response because a commit cannot contain its own SHA.

@@ -20,7 +20,7 @@ Never let preview deployments poll live retailers automatically.
 
 ## Schedule starting point
 
-- Official NECA Store discovery: once daily in `.github/workflows/live-ingestion.yml`. The official storefront currently returns `503` from Vercel egress, so do not move this job back to Vercel until a production smoke succeeds there.
+- Official NECA Store discovery: once daily in `.github/workflows/live-ingestion.yml` after the workflow reaches the default branch and its encrypted Actions secrets are provisioned. The official storefront currently returns `503` from Vercel egress, so do not move this job back to Vercel until a production smoke succeeds there.
 - Active-hunt availability: every 60–120 minutes, only when an approved source supports it and within rate limits.
 - Reddit public RSS: once daily on Vercel Hobby. OAuth/API access may use a permitted higher interval only after approval and a hosting-plan review.
 - Ranking refresh: event-driven after new evidence plus a daily decay refresh.
