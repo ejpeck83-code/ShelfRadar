@@ -7,7 +7,7 @@ export type DiscoveryRunInput = { adapter: RetailDiscoveryAdapter; repository: C
 
 export async function runDiscovery(input: DiscoveryRunInput): Promise<IngestionRunRecord> {
   const counts: IngestionCounts = { fetched: 0, parsed: 0, created: 0, updated: 0, ignored: 0, failed: 0 };
-  const run = await input.repository.startRun({ sourceKey: input.adapter.sourceKey, runKey: input.runKey, parserVersion: "target-fixture-v1", startedAt: input.now });
+  const run = await input.repository.startRun({ sourceKey: input.adapter.sourceKey, jobType: "product_discovery", runKey: input.runKey, parserVersion: input.adapter.parserVersion ?? "unknown", startedAt: input.now });
   if (run.status !== "RUNNING") return run;
   const controller = new AbortController();
   const result = await input.adapter.discover(

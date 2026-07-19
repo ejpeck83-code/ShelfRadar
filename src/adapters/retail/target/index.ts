@@ -18,6 +18,7 @@ export function parseTargetPayload(payload: unknown): AdapterResult<RawListing> 
 
 export class TargetAdapter implements RetailDiscoveryAdapter {
   readonly sourceKey = "target";
+  readonly parserVersion = TARGET_PARSER_VERSION;
   readonly capabilities = ["product_discovery", "listing_detail", "store_availability"] as const;
 
   constructor(private readonly mode: AppEnv["TARGET_ADAPTER_MODE"], private readonly provider?: TargetProvider) {}

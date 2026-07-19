@@ -1,0 +1,16 @@
+{
+  "kind": "success",
+  "fetchedAt": "2026-07-25T16:15:00.000Z",
+  "items": [
+    {
+      "productId": "NECA-54210",
+      "manufacturerSku": "54210",
+      "title": "TMNT The Last Ronin Ultimate Donatello",
+      "url": "https://store.necaonline.com/products/tmnt-last-ronin-donatello-sanitized",
+      "brand": "NECA",
+      "characters": ["Donatello"],
+      "state": "removed",
+      "onlineState": "unknown"
+    }
+  ]
+}

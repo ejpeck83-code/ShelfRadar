@@ -1,18 +1,20 @@
 # Shelf Radar
 
-Shelf Radar is a mobile-first, single-user TMNT discovery and sourcing web app. This repository contains Milestones 0 and 1: the platform foundation and a complete fixture-backed Target vertical slice.
+Shelf Radar is a mobile-first, single-user TMNT discovery and sourcing web app. This repository contains the platform foundation plus fixture-backed Target, bounded retail discovery, and Reddit/Ross crowd-intelligence integrations.
 
 The app is deliberately careful with retailer data. Availability is stored as an append-only observation with a source and timestamp. It is not an inventory promise, and `SOURCE_UNAVAILABLE` is never rendered as out of stock.
 
 ## What works
 
 - Target fixture discovery, canonical validation, normalization, exact-identifier matching, PostgreSQL persistence, and idempotent replay.
+- Fixture/unavailable/provider boundaries for Walmart, Meijer, NECA, and an allowlisted online source, including exact cross-retailer UPC merging.
+- Fixture/unavailable/OAuth-boundary Reddit ingestion for TMNT, NECATMNT, ActionFigures, and RossFinds with sanitized excerpts, durable checkpoints, conservative product candidates, and provenance-preserving deduplication.
 - Discover, one-tap classification (`New`, `Hunt`, `Watch`, `Ignore`, `Own`), Product Detail, a limited-evidence Hunts lead, Signals empty state, and owner source status.
 - Target identifiers remain namespaced; title-only candidates never auto-merge; exact-identifier conflicts enter `match_review_items`.
 - Versioned ranking vocabulary with visible positive, negative, and neutral factors. No probability percentages.
 - Full schema support for later crowd sightings, Ross crowd-inventory, and curated waves without enabling those capabilities.
 
-Target live ingestion is **not implemented**. Provider mode is only an extension point and environment validation requires the explicit live flag plus provider URL/key. Walmart, Meijer, NECA, online retail, Reddit, and Ross adapters are explicitly unavailable in this milestone.
+No live connector is shipped. Target, Walmart, Meijer, NECA, and online provider modes are extension points only. Reddit OAuth mode additionally requires explicit live enablement, approved credentials, and an injected approved-access client. Ross remains crowd-inventory only and never creates formal availability observations.
 
 ## Requirements
 
@@ -37,6 +39,12 @@ npm run demo:fixtures
 ```
 
 The command ingests the Target fixture twice and prints counts proving that products, listings, and availability observations are not duplicated.
+
+To replay every registered retail fixture and verify exact cross-retailer UPC merging:
+
+```bash
+npm run demo:retail-fixtures
+```
 
 ## PostgreSQL migration and seed
 

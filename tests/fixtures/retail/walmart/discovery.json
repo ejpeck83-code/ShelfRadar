@@ -1,0 +1,40 @@
+{
+  "kind": "success",
+  "fetchedAt": "2026-07-18T16:05:00.000Z",
+  "nextCursor": "page-2",
+  "items": [
+    {
+      "itemId": "147258369",
+      "title": "NECA TMNT The Last Ronin Ultimate Leonardo",
+      "url": "https://www.walmart.com/ip/147258369",
+      "imageUrl": "https://i5.walmartimages.com/seo/tmnt-leonardo-sanitized.jpg",
+      "brand": "NECA",
+      "manufacturer": "NECA",
+      "line": "The Last Ronin",
+      "productType": "Action Figure",
+      "characters": ["Leonardo"],
+      "upc": "634482541333",
+      "price": { "amountMinor": 3499, "currency": "USD" },
+      "listingState": "active",
+      "availability": [
+        { "storeId": "WM-2787", "state": "in_stock", "observedAt": "2026-07-18T16:05:00.000Z", "label": "Pickup available" }
+      ]
+    },
+    {
+      "itemId": "258369147",
+      "title": "Playmates TMNT Mutant Mayhem Sewer Lair Set",
+      "url": "https://www.walmart.com/ip/258369147",
+      "brand": "Playmates Toys",
+      "manufacturer": "Playmates Toys",
+      "line": "Mutant Mayhem",
+      "productType": "Playset",
+      "characters": ["Leonardo", "Raphael", "Donatello", "Michelangelo"],
+      "gtin": "0123456789012",
+      "price": { "amountMinor": 5999, "currency": "USD" },
+      "listingState": "active",
+      "availability": [
+        { "state": "online_only", "observedAt": "2026-07-18T16:05:00.000Z", "label": "Shipping available" }
+      ]
+    }
+  ]
+}
