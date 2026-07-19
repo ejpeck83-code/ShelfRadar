@@ -21,6 +21,8 @@ export function crowdSightingToRankingEvidence(sighting: CrowdRankingSighting): 
     exactNamedStoreSighting: exactProduct && sighting.locationScope === "NAMED_STORE" && sighting.reviewStatus === "AUTO_ACCEPTED",
     exactPhoto,
     exactText,
+    lineWavePhoto: sighting.evidenceKind === "LINE_OR_WAVE_PHOTO",
+    lineWaveText: sighting.evidenceKind === "LINE_OR_WAVE_TEXT",
     regionalRossActivity: sighting.retailerKey === "ross" && sighting.locationScope === "REGIONAL" && exactProduct,
     uncertainLocation: sighting.reviewStatus !== "AUTO_ACCEPTED" || sighting.locationScope === "UNKNOWN" || sighting.locationScope === "NATIONAL",
     likelyRepost: sighting.confidenceReasons.includes("LIKELY_REPOST")

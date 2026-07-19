@@ -1,7 +1,7 @@
 import fixturePayload from "../../../../tests/fixtures/retail/target/discovery.json";
 import { rawListingSchema, type AdapterResult, type DiscoveryQuery, type RawListing, type RetailDiscoveryAdapter, type AdapterContext } from "@/domain/adapters";
 import type { AppEnv } from "@/config/env";
-import { callProvider, DEFAULT_ADAPTER_POLICY, validateDiscoveryQuery, type AdapterSafetyPolicy } from "../online/support";
+import { callProvider, DEFAULT_ADAPTER_POLICY, urlMatchesAllowedHosts, validateDiscoveryQuery, type AdapterSafetyPolicy } from "../online/support";
 
 export const TARGET_PARSER_VERSION = "target-fixture-v1";
 
@@ -13,6 +13,9 @@ export function parseTargetPayload(payload: unknown): AdapterResult<RawListing> 
   const parsed = rawListingSchema.array().safeParse(payload);
   if (!parsed.success) {
     return { kind: "malformed", reason: "Target payload failed canonical validation", rawRef: "redacted:validation-error" };
+  }
+  if (parsed.data.some((item) => !urlMatchesAllowedHosts(item.canonicalUrl, ["target.com"]))) {
+    return { kind: "malformed", reason: "Target item URL is outside the configured allowlist", rawRef: "redacted:disallowed-host" };
   }
   return { kind: "success", items: parsed.data, fetchedAt: parsed.data[0]?.provenance.fetchedAt ?? new Date(0).toISOString() };
 }

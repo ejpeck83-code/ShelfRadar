@@ -17,7 +17,7 @@ function repository(options: { failPost?: boolean } = {}) {
     status: "RUNNING",
     counts: { fetched: 0, parsed: 0, created: 0, updated: 0, ignored: 0, failed: 0 }
   };
-  return {
+  const store = {
     startRun: vi.fn().mockResolvedValue(run),
     finishRun: vi.fn().mockResolvedValue(undefined),
     latestCheckpoint: vi.fn().mockResolvedValue("reddit:v1:t3_prior"),
@@ -28,6 +28,7 @@ function repository(options: { failPost?: boolean } = {}) {
     }),
     persistSighting: vi.fn().mockResolvedValue({ created: true, candidateCount: 0 })
   };
+  return { ...store, inTransaction: vi.fn().mockImplementation(async (operation: (transactionalStore: typeof store) => Promise<unknown>) => operation(store)) };
 }
 
 describe("crowd ingestion orchestration", () => {

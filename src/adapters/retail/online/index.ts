@@ -6,6 +6,7 @@ import {
   callProvider,
   DEFAULT_ADAPTER_POLICY,
   responseWithinLimit,
+  urlMatchesAllowedHosts,
   unavailableReason,
   validateDiscoveryQuery,
   type AdapterSafetyPolicy,
@@ -53,7 +54,7 @@ export function parseOnlineRetailerPayload(retailer: OnlineRetailerKey, payload:
   const config = sourceConfig[retailer];
   const items: RawListing[] = [];
   for (const item of parsed.data.items) {
-    if (!config.allowedHosts.includes(new URL(item.url).hostname)) return { kind: "malformed", reason: "Online retailer item URL is outside the configured allowlist", rawRef: "redacted:disallowed-host" };
+    if (!urlMatchesAllowedHosts(item.url, config.allowedHosts)) return { kind: "malformed", reason: "Online retailer item URL is outside the configured allowlist", rawRef: "redacted:disallowed-host" };
     const sku = normalizeIdentifier("RETAILER_SKU", item.retailerSku);
     const identifiers: RawListing["identifiers"] = [{ kind: "RETAILER_SKU", value: sku.valueNormalized, confidence: "EXACT" }];
     if (item.gtin) {

@@ -8,6 +8,8 @@ body { margin: 0; background: #fff; }
 a { color: inherit; }
 button, input, select { font: inherit; }
 button:focus-visible, a:focus-visible, select:focus-visible { outline: 3px solid #f0a46f; outline-offset: 2px; }
+.skip-link { position: fixed; top: 8px; left: 8px; z-index: 100; padding: 10px 14px; border-radius: 6px; background: var(--ink); color: #fff; transform: translateY(-180%); }
+.skip-link:focus { transform: translateY(0); }
 .app-shell { min-height: 100dvh; max-width: 760px; margin: 0 auto; background: #fff; padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
 .site-header { min-height: 76px; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid var(--line); padding: max(16px, env(safe-area-inset-top)) 20px 12px; }
 .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font-size: 1.25rem; font-weight: 800; letter-spacing: -.025em; }

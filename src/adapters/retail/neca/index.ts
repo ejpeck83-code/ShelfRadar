@@ -6,6 +6,7 @@ import {
   callProvider,
   DEFAULT_ADAPTER_POLICY,
   responseWithinLimit,
+  urlMatchesAllowedHosts,
   unavailableReason,
   validateDiscoveryQuery,
   type AdapterSafetyPolicy,
@@ -54,6 +55,9 @@ export function parseNecaPayload(payload: unknown, policy: AdapterSafetyPolicy =
   }
   const items: RawListing[] = [];
   for (const item of parsed.data.items) {
+    if (!urlMatchesAllowedHosts(item.url, ["necaonline.com"])) {
+      return { kind: "malformed", reason: "NECA item URL is outside the configured allowlist", rawRef: "redacted:disallowed-host" };
+    }
     const identifiers: RawListing["identifiers"] = [{ kind: "RETAILER_SKU", value: item.productId.toUpperCase(), confidence: "EXACT" }];
     if (item.manufacturerSku) identifiers.push({ kind: "MANUFACTURER_SKU", value: item.manufacturerSku.toUpperCase(), confidence: "CLAIMED" });
     if (item.upc) {

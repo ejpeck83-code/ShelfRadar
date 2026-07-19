@@ -9,9 +9,14 @@ import { MeijerAdapter, parseMeijerPayload } from "@/adapters/retail/meijer";
 import { NecaAdapter, parseNecaPayload } from "@/adapters/retail/neca";
 import { ConfiguredOnlineRetailerAdapter, parseOnlineRetailerPayload } from "@/adapters/retail/online";
 import { WalmartAdapter, parseWalmartPayload } from "@/adapters/retail/walmart";
+import { parseTargetPayload, TargetAdapter } from "@/adapters/retail/target";
 
 const context = { signal: new AbortController().signal, requestId: "source-test", now: new Date("2026-07-18T16:30:00.000Z") };
 const query = { terms: ["TMNT"], pageLimit: 1 };
+
+function successEnvelope(url: string, idKey: "itemId" | "sku" | "productId", id: string) {
+  return { kind: "success", fetchedAt: context.now.toISOString(), items: [{ [idKey]: id, title: "TMNT", url, state: "active", ...(idKey === "itemId" ? { listingState: "active", availability: [] } : {}), ...(idKey === "productId" ? { onlineState: "online_only" } : {}) }] };
+}
 
 describe("Walmart parsing", () => {
   it("normalizes GTINs and keeps item IDs in the Walmart namespace", async () => {
@@ -26,6 +31,9 @@ describe("Walmart parsing", () => {
       expect(result.items[1]?.identifiers).toContainEqual({ kind: "GTIN13", value: "0123456789012", confidence: "EXACT" });
       expect(result.items[0]).not.toHaveProperty("itemId");
     }
+  });
+  it("rejects a canonical item URL outside Walmart hosts", () => {
+    expect(parseWalmartPayload(successEnvelope("https://example.com/item", "itemId", "123"))).toMatchObject({ kind: "malformed", rawRef: "redacted:disallowed-host" });
   });
   it("represents changed prices and removed listings", () => {
     expect(parseWalmartPayload(changedWalmartPrice)).toMatchObject({ kind: "success", items: [{ priceMinor: 3299 }] });
@@ -50,6 +58,9 @@ describe("Meijer parsing", () => {
       expect(result.items[1]?.availability).toEqual([]);
     }
   });
+  it("rejects a canonical item URL outside Meijer hosts", () => {
+    expect(parseMeijerPayload(successEnvelope("https://example.com/item", "sku", "MEI-1"))).toMatchObject({ kind: "malformed", rawRef: "redacted:disallowed-host" });
+  });
   it("preserves throttling metadata and rejects malformed payloads", () => {
     expect(parseMeijerPayload(throttledMeijer)).toEqual({ kind: "throttled", retryAfter: "2026-07-18T16:15:00.000Z" });
     expect(parseMeijerPayload(malformedMeijer)).toMatchObject({ kind: "malformed", rawRef: "redacted:validation-error" });
@@ -72,6 +83,9 @@ describe("NECA and allowlisted online parsing", () => {
     }
     expect(parseNecaPayload(removedNeca)).toMatchObject({ kind: "success", items: [{ listingStatus: "REMOVED", availability: [{ status: "UNKNOWN" }] }] });
   });
+  it("rejects a canonical item URL outside NECA hosts", () => {
+    expect(parseNecaPayload(successEnvelope("https://example.com/item", "productId", "NECA-1"))).toMatchObject({ kind: "malformed", rawRef: "redacted:disallowed-host" });
+  });
   it("accepts only the selected online retailer host", async () => {
     const adapter = new ConfiguredOnlineRetailerAdapter({ retailer: "bigbadtoystore", mode: "fixture" });
     await expect(adapter.discover(query, context)).resolves.toMatchObject({ kind: "success", items: [{ listingStatus: "PREORDER", availability: [{ status: "PREORDER" }] }] });
@@ -79,5 +93,13 @@ describe("NECA and allowlisted online parsing", () => {
       kind: "success", fetchedAt: context.now.toISOString(),
       items: [{ retailerSku: "BAD-1", title: "TMNT", url: "https://unapproved.example/item", state: "active", onlineState: "online_only" }]
     })).toMatchObject({ kind: "malformed", rawRef: "redacted:disallowed-host" });
+  });
+});
+
+describe("Target parsing", () => {
+  it("rejects a canonical item URL outside Target hosts", async () => {
+    const fixture = await new TargetAdapter("fixture").discover(query, context);
+    if (fixture.kind !== "success" || !fixture.items[0]) throw new Error("Target fixture missing");
+    expect(parseTargetPayload([{ ...fixture.items[0], canonicalUrl: "https://example.com/item" }])).toMatchObject({ kind: "malformed", rawRef: "redacted:disallowed-host" });
   });
 });

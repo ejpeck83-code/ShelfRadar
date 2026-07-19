@@ -8,7 +8,7 @@ import { isAuthorizedOwner, isSameOriginMutation } from "@/security/owner-auth";
 const bodySchema = z.object({ state: userProductStateSchema, mutationId: z.string().uuid() });
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const env = parseEnv();
-  if (!isAuthorizedOwner(request, env) || !isSameOriginMutation(request)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!isAuthorizedOwner(request, env) || !isSameOriginMutation(request, env)) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const { id } = await params;
   const input = bodySchema.safeParse(await request.json().catch(() => null));
   if (!z.uuid().safeParse(id).success || !input.success) return NextResponse.json({ error: "Invalid classification request" }, { status: 400 });

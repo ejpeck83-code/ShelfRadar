@@ -9,7 +9,9 @@
 5. **Matching is conservative.** Exact validated identifiers can match. A title-only resemblance creates a separate product/candidate path. Conflicting exact identifiers create `match_review_items` and stop that listing from silently attaching.
 6. **Idempotency at every durable boundary.** Listings, canonical identifier namespaces, observations, state mutations, and ingestion runs have independent unique keys.
 7. **Fixture web mode is explicit.** `SHELF_RADAR_DATA_MODE=fixture` provides a deterministic, no-database UI for demos and browser tests. Database mode uses the same view model backed by Drizzle.
-8. **Ranking v1 is ordinal and inspectable.** `target-v1.0.0` emits label, internal ordering score, factor codes, point direction, evidence reference, and timestamp. The UI never presents the score as a probability.
+8. **Ranking v1 is ordinal and inspectable.** `mvp-v1.1.0` emits label, internal ordering score, factor codes, point direction, evidence reference, and timestamp. Exact product factors outweigh line/wave factors, and the UI never presents the score as a probability.
+9. **Production jobs are explicit and serialized.** Bearer-authenticated POST routes use per-source PostgreSQL advisory leases and deterministic run keys. The shipped composition keeps all production sources unavailable until an approved connector is reviewed and injected.
+10. **Cached evidence survives outages.** Current source access is projected separately from persisted listings, observations, posts and sightings. Unavailable never rewrites history or becomes out of stock.
 
 ## Raw source retention
 
@@ -17,4 +19,4 @@ Only redacted pointers/content hashes belong in `raw_source_ref`; secrets and fu
 
 ## Authentication and job endpoints
 
-This milestone uses a local single-user identity in database mode and exposes no scheduler route. Before a schedule is enabled, add a server-only authenticated job route with overlap locking, constant-time secret checks, timeout enforcement, and structured run logging.
+Local fixture mode uses a development identity and makes no external requests. Production database mode requires one allowlisted owner plus a strong shared secret. Server-only job routes require an independent bearer secret, reject browser cookies, record structured runs, and use advisory locks. The fixture preview is intentionally public and read-only; production data is never served under development authentication.

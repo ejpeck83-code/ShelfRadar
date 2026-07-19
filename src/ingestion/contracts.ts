@@ -22,6 +22,7 @@ export interface IngestionRunRepository {
 }
 
 export interface CatalogRepository extends IngestionRunRepository {
+  inTransaction<T>(operation: (repository: CatalogRepository) => Promise<T>): Promise<T>;
   findProductByExternalListing(sourceKey: string, externalId: string): Promise<string | null>;
   findMatchCandidates(listing: RawListing, retailerKey: string): Promise<MatchCandidate[]>;
   createProductFromListing(listing: RawListing): Promise<string>;

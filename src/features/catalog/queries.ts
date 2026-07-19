@@ -4,6 +4,7 @@ import { createDatabase } from "@/db/client";
 import { availabilityObservations, productIdentifiers, products, retailerListings, retailers, stores, userProductStates } from "@/db/schema";
 import { getFixtureProduct, listFixtureProducts } from "./fixture-store";
 import type { ProductView } from "./view-model";
+import { sourceStateFor, type SourceKey } from "@/features/sources/status";
 
 const USER_ID = "local-owner";
 
@@ -35,6 +36,7 @@ export async function listProducts(): Promise<ProductView[]> {
         url: row.listing.canonicalUrl,
         priceMinor: row.listing.priceMinor,
         status: row.listing.listingStatus,
+        sourceState: sourceStateFor(env, row.retailerKey as SourceKey),
         availability: (observationsByListing.get(row.listing.id) ?? []).map((item) => ({ status: item.observation.status, observedAt: item.observation.observedAt.toISOString(), storeName: item.storeName ?? `${row.retailerName} online`, sourceAvailable: item.observation.status !== "SOURCE_UNAVAILABLE" }))
       })),
       matchingSummary: productRow.product.normalizationStatus === "NEEDS_REVIEW" ? "Matching review required" : "Identifier-backed canonical product"

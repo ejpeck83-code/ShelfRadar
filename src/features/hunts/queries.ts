@@ -40,7 +40,7 @@ export function buildHuntLeads(product: ProductView, options: HuntLeadOptions = 
           reference: `observation:${listing.id}:${observation.storeName}`,
           observedAt: new Date(observation.observedAt),
           recentRetailPositive: positive,
-          sourceUnavailable: !observation.sourceAvailable
+          sourceUnavailable: !observation.sourceAvailable || listing.sourceState === "unavailable"
         }]
       });
       leads.push({
@@ -51,7 +51,7 @@ export function buildHuntLeads(product: ProductView, options: HuntLeadOptions = 
         score: result.score,
         factors: result.factors,
         calculatedAt: result.calculatedAt,
-        sourceNote: observation.sourceAvailable ? "Retailer observation; not shelf certainty" : "Source unavailable; no inventory conclusion"
+        sourceNote: observation.sourceAvailable && listing.sourceState !== "unavailable" ? "Retailer observation; not shelf certainty" : "Cached observation; source unavailable and no new inventory conclusion"
       });
     }
   }

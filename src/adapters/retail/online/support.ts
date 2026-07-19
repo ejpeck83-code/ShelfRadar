@@ -25,6 +25,18 @@ export interface ApprovedRetailProvider {
   fetchListing?(query: ListingDetailQuery, context: AdapterContext): Promise<unknown>;
 }
 
+export function urlMatchesAllowedHosts(value: string, allowedHosts: readonly string[]): boolean {
+  try {
+    const hostname = new URL(value).hostname.toLowerCase();
+    return allowedHosts.some((allowedHost) => {
+      const normalized = allowedHost.toLowerCase();
+      return hostname === normalized || hostname.endsWith(`.${normalized}`);
+    });
+  } catch {
+    return false;
+  }
+}
+
 export function validateDiscoveryQuery(query: DiscoveryQuery, policy: AdapterSafetyPolicy): AdapterResult<RawListing> | null {
   if (!Number.isInteger(query.pageLimit) || query.pageLimit < 1 || query.pageLimit > policy.maxPagesPerRequest) {
     return { kind: "malformed", reason: `pageLimit must be between 1 and ${policy.maxPagesPerRequest}` };

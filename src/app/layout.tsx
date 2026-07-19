@@ -6,5 +6,5 @@ export const metadata: Metadata = { title: { default: "Shelf Radar", template: "
 export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#ffffff" };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body><div className="app-shell"><header className="site-header"><a className="brand" href="/discover" aria-label="Shelf Radar home"><span className="radar-mark" aria-hidden="true">◉</span><span>Shelf Radar</span></a></header><main id="main-content">{children}</main><AppNav /></div></body></html>;
+  return <html lang="en"><body><a className="skip-link" href="#main-content">Skip to main content</a><div className="app-shell"><header className="site-header"><a className="brand" href="/discover" aria-label="Shelf Radar home"><span className="radar-mark" aria-hidden="true">◉</span><span>Shelf Radar</span></a></header><main id="main-content" tabIndex={-1}>{children}</main><AppNav /></div></body></html>;
 }

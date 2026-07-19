@@ -3,13 +3,25 @@ import { availabilityStatusSchema, identifierKindSchema, listingStatusSchema } f
 
 export const adapterCapabilitySchema = z.enum(["product_discovery", "listing_detail", "store_availability", "crowd_posts"]);
 
-export const httpUrlSchema = z.string().max(2_048).refine((value) => {
+export function isPublicHttpUrl(value: string): boolean {
   try {
-    return ["http:", "https:"].includes(new URL(value).protocol);
+    const url = new URL(value);
+    if (!["http:", "https:"].includes(url.protocol) || url.username || url.password) return false;
+    const hostname = url.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+    if (hostname === "localhost" || hostname.endsWith(".localhost") || hostname.endsWith(".local")) return false;
+    if (hostname.includes(":") && (hostname === "::1" || hostname.startsWith("fc") || hostname.startsWith("fd") || hostname.startsWith("fe80:"))) return false;
+    const octets = hostname.split(".").map(Number);
+    if (octets.length === 4 && octets.every((part) => Number.isInteger(part) && part >= 0 && part <= 255)) {
+      const [a, b] = octets as [number, number, number, number];
+      if (a === 0 || a === 10 || a === 127 || a >= 224 || (a === 100 && b >= 64 && b <= 127) || (a === 169 && b === 254) || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168)) return false;
+    }
+    return true;
   } catch {
     return false;
   }
-}, "must be an HTTP(S) URL");
+}
+
+export const httpUrlSchema = z.string().max(2_048).refine(isPublicHttpUrl, "must be a public HTTP(S) URL without embedded credentials");
 
 export const rawIdentifierSchema = z.object({
   kind: identifierKindSchema,

@@ -48,11 +48,21 @@ test("classification network failure stays recoverable", async ({ page }) => {
 test("primary discovery actions are keyboard reachable", async ({ page }) => {
   await page.goto("/discover");
   await page.keyboard.press("Tab");
+  await expect(page.getByRole("link", { name: "Skip to main content" })).toBeFocused();
+  await page.keyboard.press("Tab");
   await expect(page.getByRole("link", { name: "Shelf Radar" })).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(page.getByRole("article").first().getByRole("link", { name: /Open NECA TMNT/ })).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(page.getByRole("article").first().getByRole("button", { name: "New" })).toBeFocused();
+});
+
+test("content reflows at 320px without horizontal scrolling", async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 720 });
+  for (const route of ["/discover", "/hunts", "/signals", "/status", "/products/2d1f0d9e-06d4-4e61-b7f1-6d10442fda01"]) {
+    await page.goto(route);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true);
+  }
 });
 
 test("core pages have no serious accessibility violations", async ({ page }) => {

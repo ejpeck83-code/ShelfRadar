@@ -2,6 +2,7 @@ import type { CrowdSourceAdapter } from "@/domain/adapters";
 import type { CrowdTermConfig } from "@/features/sightings/parser";
 import { ingestCrowdPosts, type CrowdSightingRepository } from "@/features/sightings/parser/persistence";
 import type { IngestionCounts, IngestionRunRecord } from "./contracts";
+import { sanitizeOperationalMessage } from "@/security/sanitize-operational-message";
 
 const JOB_TYPE = "crowd_posts";
 
@@ -43,7 +44,7 @@ export async function runCrowdDiscovery(input: CrowdDiscoveryRunInput): Promise<
   }
   if (result.kind !== "success") {
     run.status = result.kind === "malformed" ? "FAILED" : "SKIPPED";
-    run.message = result.kind === "throttled" ? "Source throttled" : result.reason;
+    run.message = result.kind === "throttled" ? "Source throttled" : sanitizeOperationalMessage(result.reason);
     run.counts = counts;
     await input.repository.finishRun(run);
     return run;
@@ -52,7 +53,7 @@ export async function runCrowdDiscovery(input: CrowdDiscoveryRunInput): Promise<
   counts.fetched = result.items.length;
   counts.parsed = result.items.length;
   try {
-    const persisted = await ingestCrowdPosts({ posts: result.items, repository: input.repository, terms: input.terms, now: input.now });
+    const persisted = await input.repository.inTransaction((repository) => ingestCrowdPosts({ posts: result.items, repository, terms: input.terms, now: input.now }));
     counts.created = persisted.postsCreated + persisted.sightingsCreated + persisted.candidatesCreated;
     counts.ignored = persisted.duplicateEvidence;
     run.counts = counts;

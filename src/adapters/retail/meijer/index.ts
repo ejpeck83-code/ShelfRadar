@@ -6,6 +6,7 @@ import {
   callProvider,
   DEFAULT_ADAPTER_POLICY,
   responseWithinLimit,
+  urlMatchesAllowedHosts,
   unavailableReason,
   validateDiscoveryQuery,
   type AdapterSafetyPolicy,
@@ -58,6 +59,9 @@ export function parseMeijerPayload(payload: unknown, policy: AdapterSafetyPolicy
   }
   const items: RawListing[] = [];
   for (const item of parsed.data.items) {
+    if (!urlMatchesAllowedHosts(item.url, ["meijer.com"])) {
+      return { kind: "malformed", reason: "Meijer item URL is outside the configured allowlist", rawRef: "redacted:disallowed-host" };
+    }
     const sku = normalizeIdentifier("MEIJER_SKU", item.sku);
     const identifiers: RawListing["identifiers"] = [{ kind: "MEIJER_SKU", value: sku.valueNormalized, confidence: "EXACT" }];
     if (item.upc) {

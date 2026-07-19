@@ -1,11 +1,11 @@
 import { and, desc, eq, isNotNull } from "drizzle-orm";
-import type { ShelfRadarDb } from "@/db/client";
+import type { ShelfRadarQueryDb } from "@/db/client";
 import { ingestionRuns } from "@/db/schema";
 import type { IngestionRunRecord, IngestionRunRepository } from "@/ingestion/contracts";
 
 type StartRunInput = Parameters<IngestionRunRepository["startRun"]>[0];
 
-export async function startPostgresIngestionRun(db: ShelfRadarDb, input: StartRunInput): Promise<IngestionRunRecord> {
+export async function startPostgresIngestionRun(db: ShelfRadarQueryDb, input: StartRunInput): Promise<IngestionRunRecord> {
   const inserted = await db.insert(ingestionRuns).values({
     sourceKey: input.sourceKey,
     jobType: input.jobType,
@@ -19,7 +19,7 @@ export async function startPostgresIngestionRun(db: ShelfRadarDb, input: StartRu
   return postgresRunFromRow(row);
 }
 
-export async function finishPostgresIngestionRun(db: ShelfRadarDb, run: IngestionRunRecord): Promise<void> {
+export async function finishPostgresIngestionRun(db: ShelfRadarQueryDb, run: IngestionRunRecord): Promise<void> {
   await db.update(ingestionRuns).set({
     status: run.status,
     finishedAt: new Date(),
@@ -34,7 +34,7 @@ export async function finishPostgresIngestionRun(db: ShelfRadarDb, run: Ingestio
   }).where(eq(ingestionRuns.id, run.id));
 }
 
-export async function latestPostgresCheckpoint(db: ShelfRadarDb, sourceKey: string, jobType: string): Promise<string | undefined> {
+export async function latestPostgresCheckpoint(db: ShelfRadarQueryDb, sourceKey: string, jobType: string): Promise<string | undefined> {
   const row = (await db.select({ cursor: ingestionRuns.cursor }).from(ingestionRuns).where(and(
     eq(ingestionRuns.sourceKey, sourceKey),
     eq(ingestionRuns.jobType, jobType),

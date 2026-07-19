@@ -8,3 +8,5 @@ export function createDatabase(url: string, options: { max?: number } = {}) {
 }
 
 export type ShelfRadarDb = ReturnType<typeof createDatabase>["db"];
+export type ShelfRadarTransaction = Parameters<Parameters<ShelfRadarDb["transaction"]>[0]>[0];
+export type ShelfRadarQueryDb = ShelfRadarDb | ShelfRadarTransaction;

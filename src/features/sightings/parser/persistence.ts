@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import type { ShelfRadarDb } from "@/db/client";
+import type { ShelfRadarQueryDb } from "@/db/client";
 import { crowdPosts, productIdentifiers, products, retailers, sightingProductCandidates, sightings, stores } from "@/db/schema";
 import type { RawCrowdPost } from "@/adapters/crowd/reddit";
 import { buildEvidenceGroups, fingerprintCrowdPost } from "../dedup";
@@ -12,13 +12,19 @@ import { finishPostgresIngestionRun, latestPostgresCheckpoint, startPostgresInge
 export type CrowdIngestionCounts = { fetched: number; postsCreated: number; sightingsCreated: number; duplicateEvidence: number; candidatesCreated: number };
 
 export interface CrowdSightingRepository extends IngestionRunRepository {
+  inTransaction<T>(operation: (repository: CrowdSightingRepository) => Promise<T>): Promise<T>;
   loadProductCandidates(): Promise<CrowdProductRecord[]>;
   persistPost(post: RawCrowdPost): Promise<{ id: string; created: boolean }>;
   persistSighting(input: { postId: string; extraction: SightingExtraction; evidenceGroupKey: string; candidates: readonly SightingCandidate[]; reviewRequired: boolean }): Promise<{ created: boolean; candidateCount: number }>;
 }
 
 export class PostgresCrowdSightingRepository implements CrowdSightingRepository {
-  constructor(private readonly db: ShelfRadarDb) {}
+  constructor(private readonly db: ShelfRadarQueryDb) {}
+
+  async inTransaction<T>(operation: (repository: CrowdSightingRepository) => Promise<T>): Promise<T> {
+    if (!("$client" in this.db)) return operation(this);
+    return this.db.transaction(async (transaction) => operation(new PostgresCrowdSightingRepository(transaction)));
+  }
 
   async startRun(input: { sourceKey: string; jobType: string; runKey: string; parserVersion: string; startedAt: Date }): Promise<IngestionRunRecord> {
     return startPostgresIngestionRun(this.db, input);

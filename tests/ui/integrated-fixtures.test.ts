@@ -36,4 +36,14 @@ describe("integrated fixture view models", () => {
     expect(leads.every((lead) => lead.factors.length > 0)).toBe(true);
     expect(JSON.stringify(leads)).not.toMatch(/percent|probability|%/i);
   });
+
+  it("breaks equal-score ties by stable lead name", () => {
+    const product = structuredClone(listFixtureProducts()[0]!);
+    product.listings[0]!.availability = [
+      { status: "UNKNOWN", observedAt: "2026-07-18T16:00:00.000Z", storeName: "Target Zionsville", sourceAvailable: false },
+      { status: "UNKNOWN", observedAt: "2026-07-18T16:00:00.000Z", storeName: "Target Carmel", sourceAvailable: false }
+    ];
+    product.listings = [product.listings[0]!];
+    expect(buildHuntLeads(product, { calculatedAt: new Date("2026-07-18T21:00:00.000Z") }).map((lead) => lead.name)).toEqual(["Target Carmel", "Target Zionsville"]);
+  });
 });

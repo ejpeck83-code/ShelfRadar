@@ -1,7 +1,7 @@
 import type { ProductIdentifierView } from "@/features/catalog/view-model";
 
 export function formatCurrency(minor: number | null): string { return minor === null ? "Price unavailable" : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(minor / 100); }
-export function formatFreshness(iso: string, now = new Date("2026-07-18T21:00:00.000Z")): string {
+export function formatFreshness(iso: string, now = new Date()): string {
   const hours = Math.max(0, Math.round((now.getTime() - new Date(iso).getTime()) / 3_600_000));
   return hours < 1 ? "less than an hour ago" : hours === 1 ? "1 hour ago" : `${hours} hours ago`;
 }

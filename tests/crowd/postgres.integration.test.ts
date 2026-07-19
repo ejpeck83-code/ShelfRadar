@@ -7,6 +7,7 @@ import { availabilityObservations, crowdPosts, ingestionRuns, productIdentifiers
 import { buildRedditQueryTerms, DEFAULT_CROWD_TERMS } from "@/features/sightings/parser";
 import { PostgresCrowdSightingRepository, ingestCrowdPosts } from "@/features/sightings/parser/persistence";
 import { runCrowdDiscovery } from "@/ingestion/run-crowd-discovery";
+import { applyRawSourceRetention } from "@/operations/retention";
 
 const url = process.env.TEST_DATABASE_URL;
 describe.skipIf(!url)("PostgreSQL crowd sighting integration", () => {
@@ -66,5 +67,15 @@ describe.skipIf(!url)("PostgreSQL crowd sighting integration", () => {
     expect(await database.db.select().from(ingestionRuns).where(eq(ingestionRuns.runKey, "crowd:postgres:first"))).toMatchObject([
       { status: "SUCCEEDED", cursor: "reddit:v1:t3_ross_local_1", parserVersion: "reddit-v1" }
     ]);
+  });
+
+  it("redacts expired crowd excerpts and raw pointers while retaining idempotency records", async () => {
+    await database.db.update(crowdPosts).set({ fetchedAt: new Date("2026-05-01T00:00:00.000Z") });
+    const result = await applyRawSourceRetention(database.db, now, 30);
+    const rows = await database.db.select().from(crowdPosts);
+    expect(result.redactedCrowdPosts).toBe(rows.length);
+    expect(rows.every((row) => row.bodyExcerpt === null && row.authorDisplay === null && row.rawSourceRef === null)).toBe(true);
+    expect(rows.every((row) => row.externalPostId.length > 0 && row.contentHash.length === 64)).toBe(true);
+    await expect(applyRawSourceRetention(database.db, now, 30)).resolves.toMatchObject({ redactedCrowdPosts: 0 });
   });
 });

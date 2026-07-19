@@ -33,4 +33,15 @@ describe("crowd ranking evidence", () => {
     expect(evidence).toMatchObject({ regionalRossActivity: true, exactText: true, uncertainLocation: true });
     expect(evidence.exactNamedStoreSighting).toBe(false);
   });
+
+  it("keeps line and wave evidence visibly weaker than exact product evidence", () => {
+    const exact = crowdSightingToRankingEvidence({ id: "exact", locationScope: "LOCAL_CITY", evidenceKind: "EXACT_PRODUCT_PHOTO", reviewStatus: "AUTO_ACCEPTED", confidenceReasons: [], postedAt: new Date("2026-07-18T12:00:00.000Z") });
+    const wave = crowdSightingToRankingEvidence({ id: "wave", locationScope: "LOCAL_CITY", evidenceKind: "LINE_OR_WAVE_PHOTO", reviewStatus: "AUTO_ACCEPTED", confidenceReasons: [], postedAt: new Date("2026-07-18T12:00:00.000Z") });
+    const ranked = rankStore({ productId: "product-1", storeId: "store-1", calculatedAt: new Date("2026-07-18T13:00:00.000Z"), storePreference: 0, evidence: [exact, wave] });
+    const exactPoints = ranked.factors.find((factor) => factor.code === "EXACT_PRODUCT_PHOTO")?.points ?? 0;
+    const wavePoints = ranked.factors.find((factor) => factor.code === "LINE_OR_WAVE_PHOTO")?.points ?? 0;
+    expect(wavePoints).toBeGreaterThan(0);
+    expect(wavePoints).toBeLessThan(exactPoints);
+    expect(ranked.factors.find((factor) => factor.code === "LINE_OR_WAVE_PHOTO")?.explanation).toMatch(/line or wave/i);
+  });
 });

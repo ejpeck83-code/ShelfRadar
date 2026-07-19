@@ -4,7 +4,7 @@
 
 | Source | Mode in this milestone | Network behavior | Notes |
 | --- | --- | --- | --- |
-| Target | Fixture or honest unavailable | No live requests | Provider interface exists; no connector or scraping implementation. |
+| Target | Fixture-only preview or honest unavailable | No live requests | Provider interface exists; no connector or scraping implementation. |
 | Walmart | Fixture or honest unavailable | No live requests | Provider injection boundary exists; no approved connector is shipped. |
 | Meijer | Fixture or honest unavailable | No live requests | Provider injection boundary exists; no approved connector is shipped. |
 | NECA | Fixture or honest unavailable | No live requests | Provider injection boundary exists; no approved connector is shipped. |
@@ -19,3 +19,4 @@
 - Validate external data with Zod and render only code-native text; never inject third-party HTML.
 - Redact credentials, query secrets, and private data from logs/raw references. Commit only synthetic fixtures.
 - An unavailable or throttled source is operational uncertainty, not evidence of out-of-stock status.
+- Canonical retailer item URLs must use the source’s reviewed hostname allowlist. Approved transports must reject redirects and prevent DNS-rebinding/private-egress access in addition to the canonical URL checks.

@@ -12,6 +12,7 @@ describe("Reddit OAuth approved-access client", () => {
     expect(String(url)).toContain("oauth.reddit.com/r/TMNT+RossFinds/new.json");
     expect(String(url)).toContain("limit=100");
     expect(init?.headers).toMatchObject({ authorization: "Bearer synthetic-token", "user-agent": "shelf-radar-tests" });
+    expect(init?.redirect).toBe("error");
   });
 
   it("surfaces throttling guidance and response-size failures without retrying", async () => {
@@ -22,6 +23,23 @@ describe("Reddit OAuth approved-access client", () => {
 
     const oversizedFetch = vi.fn<typeof fetch>().mockResolvedValue(new Response("x".repeat(2_000), { status: 200 }));
     expect(await new RedditOAuthClient({ accessToken: "synthetic", userAgent: "test", fetchImpl: oversizedFetch, minRequestIntervalMs: 0, maxResponseBytes: 1_024 }).fetchPage({ communities: ["TMNT"], terms: ["TMNT"], limit: 10 }, context)).toMatchObject({ kind: "unavailable", reason: expect.stringMatching(/size limit/) });
+  });
+
+  it("stops reading an oversized streamed response when content-length is absent", async () => {
+    let cancelled = false;
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        controller.enqueue(new Uint8Array(600));
+      },
+      cancel() {
+        cancelled = true;
+      }
+    });
+    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(new Response(body, { status: 200 }));
+    const result = await new RedditOAuthClient({ accessToken: "synthetic", userAgent: "test", fetchImpl, minRequestIntervalMs: 0, maxResponseBytes: 1_024 }).fetchPage({ communities: ["TMNT"], terms: ["TMNT"], limit: 10 }, context);
+
+    expect(result).toMatchObject({ kind: "unavailable", reason: expect.stringMatching(/size limit/) });
+    expect(cancelled).toBe(true);
   });
 
   it("times out an approved-access request without a live network call", async () => {

@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import type { RetailDiscoveryAdapter } from "@/domain/adapters";
 import { matchProduct } from "@/matching/match-product";
 import type { CatalogRepository, IngestionCounts, IngestionRunRecord } from "./contracts";
+import { sanitizeOperationalMessage } from "@/security/sanitize-operational-message";
 
 export type DiscoveryRunInput = { adapter: RetailDiscoveryAdapter; repository: CatalogRepository; now: Date; runKey: string; terms: string[]; pageLimit?: number };
 
@@ -21,7 +22,7 @@ export async function runDiscovery(input: DiscoveryRunInput): Promise<IngestionR
   }
   if (result.kind !== "success") {
     run.status = result.kind === "malformed" ? "FAILED" : "SKIPPED";
-    run.message = result.kind === "throttled" ? "Source throttled" : result.reason;
+    run.message = result.kind === "throttled" ? "Source throttled" : sanitizeOperationalMessage(result.reason);
     run.counts = counts;
     await input.repository.finishRun(run);
     return run;
@@ -29,30 +30,34 @@ export async function runDiscovery(input: DiscoveryRunInput): Promise<IngestionR
 
   try {
     counts.fetched = result.items.length;
-    for (const listing of result.items) {
-      counts.parsed += 1;
-      const existingListingProductId = await input.repository.findProductByExternalListing(input.adapter.sourceKey, listing.externalId);
-      let productId = existingListingProductId;
-      if (!productId) {
-        const candidates = await input.repository.findMatchCandidates(listing, input.adapter.sourceKey);
-        const decision = matchProduct(listing, candidates, input.adapter.sourceKey);
-        if (decision.kind === "review") {
-          await input.repository.createMatchReview({ sourceKey: input.adapter.sourceKey, externalListingId: listing.externalId, candidateProductIds: decision.candidateProductIds, reasonCode: decision.reason });
-          counts.failed += 1;
-          continue;
+    await input.repository.inTransaction(async (repository) => {
+      for (const listing of result.items) {
+        counts.parsed += 1;
+        const existingListingProductId = await repository.findProductByExternalListing(input.adapter.sourceKey, listing.externalId);
+        let productId = existingListingProductId;
+        if (!productId) {
+          const candidates = await repository.findMatchCandidates(listing, input.adapter.sourceKey);
+          const decision = matchProduct(listing, candidates, input.adapter.sourceKey);
+          if (decision.kind === "review") {
+            await repository.createMatchReview({ sourceKey: input.adapter.sourceKey, externalListingId: listing.externalId, candidateProductIds: decision.candidateProductIds, reasonCode: decision.reason });
+            counts.failed += 1;
+            continue;
+          }
+          productId = decision.kind === "match" ? decision.productId : await repository.createProductFromListing(listing);
+          if (decision.kind === "create") counts.created += 1;
+        } else {
+          counts.updated += 1;
         }
-        productId = decision.kind === "match" ? decision.productId : await input.repository.createProductFromListing(listing);
-        if (decision.kind === "create") counts.created += 1;
-      } else {
-        counts.updated += 1;
+        await repository.touchProduct(productId, new Date(listing.provenance.fetchedAt));
+        const savedListing = await repository.upsertListing(productId, input.adapter.sourceKey, listing);
+        if (savedListing.created && existingListingProductId) counts.updated += 1;
+        await repository.upsertIdentifiers(productId, input.adapter.sourceKey, savedListing.id, listing);
+        await repository.appendAvailability(savedListing.id, input.adapter.sourceKey, listing);
       }
-      await input.repository.touchProduct(productId, new Date(listing.provenance.fetchedAt));
-      const savedListing = await input.repository.upsertListing(productId, input.adapter.sourceKey, listing);
-      if (savedListing.created && existingListingProductId) counts.updated += 1;
-      await input.repository.upsertIdentifiers(productId, input.adapter.sourceKey, savedListing.id, listing);
-      await input.repository.appendAvailability(savedListing.id, input.adapter.sourceKey, listing);
-    }
+    });
   } catch {
+    counts.created = 0;
+    counts.updated = 0;
     return finishUnexpectedFailure(input.repository, run, counts, "Retail persistence failed; replay is safe with a new run key");
   }
   run.counts = counts;

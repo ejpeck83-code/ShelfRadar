@@ -88,6 +88,7 @@ describe("retail adapter shared contract", () => {
     const registry = createRetailAdapterRegistry(envSchema.parse({
       NODE_ENV: "test",
       FIXTURE_INGESTION_ENABLED: "true",
+      LIVE_INGESTION_ENABLED: "true",
       TARGET_ADAPTER_MODE: "fixture",
       WALMART_ADAPTER_MODE: "unavailable",
       MEIJER_ADAPTER_MODE: "fixture",

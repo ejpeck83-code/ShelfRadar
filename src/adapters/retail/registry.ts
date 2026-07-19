@@ -13,7 +13,7 @@ export function createRetailAdapterRegistry(env: AppEnv): ReadonlyMap<string, Re
     return configured;
   };
   return new Map<string, RetailDiscoveryAdapter>([
-    ["target", createTargetAdapter(env)],
+    ["target", createTargetAdapter({ ...env, TARGET_ADAPTER_MODE: sourceMode(env.TARGET_ADAPTER_MODE) })],
     ["walmart", new WalmartAdapter(sourceMode(env.WALMART_ADAPTER_MODE))],
     ["meijer", new MeijerAdapter(sourceMode(env.MEIJER_ADAPTER_MODE))],
     ["neca", new NecaAdapter(sourceMode(env.NECA_ADAPTER_MODE))],

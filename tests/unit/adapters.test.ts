@@ -20,6 +20,10 @@ describe("canonical adapter URLs", () => {
   it("accepts only public HTTP(S) listing and image URLs", () => {
     expect(rawListingSchema.safeParse(listing).success).toBe(true);
     expect(rawListingSchema.safeParse({ ...listing, canonicalUrl: "javascript:alert(1)" }).success).toBe(false);
+    expect(rawListingSchema.safeParse({ ...listing, canonicalUrl: "http://127.0.0.1/admin" }).success).toBe(false);
+    expect(rawListingSchema.safeParse({ ...listing, canonicalUrl: "https://user:pass@example.com/tmnt" }).success).toBe(false);
+    expect(rawListingSchema.safeParse({ ...listing, canonicalUrl: "http://[::1]/admin" }).success).toBe(false);
+    expect(rawListingSchema.safeParse({ ...listing, canonicalUrl: "https://fcollectibles.example/tmnt" }).success).toBe(true);
     expect(rawListingSchema.safeParse({ ...listing, imageUrl: "data:text/html,<script>alert(1)</script>" }).success).toBe(false);
   });
   it("rejects executable crowd media URLs", () => {

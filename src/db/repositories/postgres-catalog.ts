@@ -5,14 +5,19 @@ import { identifierNamespace, normalizeIdentifier, type NormalizedIdentifier } f
 import type { CatalogRepository, IngestionRunRecord } from "@/ingestion/contracts";
 import { ingestionIdempotencyKey } from "@/ingestion/run-discovery";
 import type { MatchCandidate } from "@/matching/match-product";
-import type { ShelfRadarDb } from "../client";
+import type { ShelfRadarQueryDb } from "../client";
 import { availabilityObservations, matchReviewItems, productIdentifiers, products, retailerListings, retailers, stores } from "../schema";
 import { finishPostgresIngestionRun, latestPostgresCheckpoint, startPostgresIngestionRun } from "./postgres-ingestion-runs";
 
 export class PostgresCatalogRepository implements CatalogRepository {
   private readonly retailerIds = new Map<string, string>();
 
-  constructor(private readonly db: ShelfRadarDb) {}
+  constructor(private readonly db: ShelfRadarQueryDb) {}
+
+  async inTransaction<T>(operation: (repository: CatalogRepository) => Promise<T>): Promise<T> {
+    if (!("$client" in this.db)) return operation(this);
+    return this.db.transaction(async (transaction) => operation(new PostgresCatalogRepository(transaction)));
+  }
 
   async startRun(input: { sourceKey: string; jobType: string; runKey: string; parserVersion: string; startedAt: Date }): Promise<IngestionRunRecord> {
     return startPostgresIngestionRun(this.db, input);

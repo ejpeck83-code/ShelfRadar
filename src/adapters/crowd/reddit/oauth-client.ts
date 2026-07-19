@@ -41,7 +41,8 @@ export class RedditOAuthClient implements RedditApprovedAccessClient {
     try {
       const response = await this.fetchImpl(url, {
         headers: { authorization: `Bearer ${this.options.accessToken}`, "user-agent": this.options.userAgent, accept: "application/json" },
-        signal: controller.signal
+        signal: controller.signal,
+        redirect: "error"
       });
       if (response.status === 429) {
         const retryAt = retryAfter(response);
@@ -50,8 +51,8 @@ export class RedditOAuthClient implements RedditApprovedAccessClient {
       if (!response.ok) return { kind: "unavailable", reason: `Reddit approved-access request failed with status ${response.status}` };
       const declaredLength = Number(response.headers.get("content-length") ?? 0);
       if (declaredLength > this.maxResponseBytes) return { kind: "unavailable", reason: "Reddit response exceeded the configured size limit" };
-      const text = await response.text();
-      if (new TextEncoder().encode(text).byteLength > this.maxResponseBytes) return { kind: "unavailable", reason: "Reddit response exceeded the configured size limit" };
+      const text = await readBoundedText(response, this.maxResponseBytes);
+      if (text === undefined) return { kind: "unavailable", reason: "Reddit response exceeded the configured size limit" };
       try {
         return { kind: "success", payload: JSON.parse(text) as unknown };
       } catch {
@@ -65,6 +66,35 @@ export class RedditOAuthClient implements RedditApprovedAccessClient {
       context.signal.removeEventListener("abort", abort);
     }
   }
+}
+
+async function readBoundedText(response: Response, maxBytes: number): Promise<string | undefined> {
+  if (!response.body) return "";
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      totalBytes += value.byteLength;
+      if (totalBytes > maxBytes) {
+        await reader.cancel();
+        return undefined;
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  const body = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(body);
 }
 
 function retryAfter(response: Response): string | undefined {

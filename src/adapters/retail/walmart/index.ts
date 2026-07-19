@@ -6,6 +6,7 @@ import {
   callProvider,
   DEFAULT_ADAPTER_POLICY,
   responseWithinLimit,
+  urlMatchesAllowedHosts,
   unavailableReason,
   validateDiscoveryQuery,
   type AdapterSafetyPolicy,
@@ -70,6 +71,9 @@ export function parseWalmartPayload(payload: unknown, policy: AdapterSafetyPolic
   }
   const items: RawListing[] = [];
   for (const item of parsed.data.items) {
+    if (!urlMatchesAllowedHosts(item.url, ["walmart.com"])) {
+      return { kind: "malformed", reason: "Walmart item URL is outside the configured allowlist", rawRef: "redacted:disallowed-host" };
+    }
     const identifiers: RawListing["identifiers"] = [{ kind: "WALMART_ITEM_ID", value: item.itemId, confidence: "EXACT" }];
     const upc = normalizeGtin(item.upc, "UPC");
     const gtin = normalizeGtin(item.gtin, "GTIN13");

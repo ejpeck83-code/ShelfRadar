@@ -1,6 +1,6 @@
 # Shelf Radar
 
-Shelf Radar is a mobile-first, single-user TMNT discovery and sourcing web app. This repository contains the platform foundation plus fixture-backed Target, bounded retail discovery, and Reddit/Ross crowd-intelligence integrations.
+Shelf Radar is a mobile-first, single-user TMNT discovery and sourcing web app. The repository is at the v0.1.0 release-candidate stage after `m4-hunt-experience`, with fixture-backed Target, bounded retail discovery, Reddit/Ross crowd intelligence, transparent Hunts ranking, and production-safe operational boundaries.
 
 The app is deliberately careful with retailer data. Availability is stored as an append-only observation with a source and timestamp. It is not an inventory promise, and `SOURCE_UNAVAILABLE` is never rendered as out of stock.
 
@@ -14,8 +14,15 @@ The app is deliberately careful with retailer data. Availability is stored as an
 - Versioned ranking vocabulary with visible positive, negative, and neutral factors. No probability percentages.
 - Ross crowd reports remain distinct from retailer inventory observations, with named-store, local, regional, national, and unknown scopes shown explicitly.
 - Full schema support for curated waves and later review workflows without claiming those capabilities are active.
+- Authenticated, non-overlapping scheduled-job routes, persisted source run health/counts, cached-data degradation, and raw-source retention.
+- Public read-only fixture preview support plus production owner authentication and live-ingestion kill switches.
 
 No live connector is shipped. Target, Walmart, Meijer, NECA, and online provider modes are extension points only. Reddit OAuth mode additionally requires explicit live enablement, approved credentials, and an injected approved-access client. Ross remains crowd-inventory only and never creates formal availability observations.
+
+| Source | v0.1.0 production | Preview/local |
+| --- | --- | --- |
+| Target, Walmart, Meijer, NECA, BigBadToyStore | Unavailable; no connector shipped | Fixture-only |
+| Reddit / Ross Finds | Unavailable; OAuth boundary only | Fixture-only |
 
 ## Requirements
 
@@ -72,6 +79,7 @@ npm run typecheck
 npm test
 npm run test:integration
 npm run test:e2e
+npm run test:preview # requires PREVIEW_BASE_URL
 npm run build
 ```
 
@@ -91,7 +99,7 @@ CI provisions disposable PostgreSQL and Chromium. No test or build contacts Targ
 - `drizzle`: committed SQL migrations
 - `tests`: unit, adapter, PostgreSQL, fixture, and Playwright coverage
 
-See [Product Brief](docs/PRODUCT_BRIEF.md), [Architecture](docs/ARCHITECTURE.md), [Architecture Notes](docs/ARCHITECTURE_NOTES.md), [UX states](docs/UX.md), [Acceptance Tests](docs/ACCEPTANCE_AND_TESTS.md), [Source Compliance](docs/SOURCE_COMPLIANCE.md), and [Deployment](docs/DEPLOYMENT.md).
+See [Product Brief](docs/PRODUCT_BRIEF.md), [Architecture](docs/ARCHITECTURE.md), [Release Traceability](docs/RELEASE_TRACEABILITY.md), [Operations Runbook](docs/OPERATIONS_RUNBOOK.md), [Security Review](docs/SECURITY_REVIEW.md), [UX states](docs/UX.md), [Acceptance Tests](docs/ACCEPTANCE_AND_TESTS.md), [Source Compliance](docs/SOURCE_COMPLIANCE.md), [Deployment](docs/DEPLOYMENT.md), and [Changelog](CHANGELOG.md).
 
 ## Safety
 
@@ -99,3 +107,9 @@ See [Product Brief](docs/PRODUCT_BRIEF.md), [Architecture](docs/ARCHITECTURE.md)
 - Never commit `.env`, production payloads, tokens, cookies, addresses, or browser artifacts.
 - Treat external payloads as untrusted data and validate with Zod before normalization.
 - Disable live ingestion globally with `LIVE_INGESTION_ENABLED=false`; set each source mode to `unavailable` when it should not serve fixtures.
+
+## Release and operations status
+
+Production must start with database mode, owner/job secrets, fixtures off, global live ingestion off, and every source unavailable. Enable one source only after an approved connector is implemented and reviewed; configuration alone never makes a source live. Backup/restore, schedule, retention, source-enable and additive rollback procedures are in the operations runbook.
+
+The release branch may be merged and tagged `v0.1.0` only after explicit authorization and green required CI. Automated wave detection remains excluded.

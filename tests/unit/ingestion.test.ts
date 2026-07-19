@@ -21,6 +21,7 @@ describe("fixture ingestion", () => {
   it("records the adapter parser version on the ingestion run", async () => {
     const repository = new MemoryCatalogRepository();
     const startRun = vi.spyOn(repository, "startRun");
+    const inTransaction = vi.spyOn(repository, "inTransaction");
     const adapter = {
       sourceKey: "custom-retailer",
       parserVersion: "custom-retailer-v2",
@@ -33,6 +34,7 @@ describe("fixture ingestion", () => {
     await runDiscovery({ adapter, repository, now: new Date("2026-07-18T16:00:00.000Z"), runKey: "custom:first", terms: ["TMNT"] });
 
     expect(startRun).toHaveBeenCalledWith(expect.objectContaining({ parserVersion: "custom-retailer-v2" }));
+    expect(inTransaction).toHaveBeenCalledOnce();
   });
   it("closes the ingestion run when an adapter throws unexpectedly", async () => {
     const repository = new MemoryCatalogRepository();
@@ -45,5 +47,14 @@ describe("fixture ingestion", () => {
     const result = await runDiscovery({ adapter, repository, now: new Date("2026-07-18T16:00:00.000Z"), runKey: "throwing:first", terms: ["TMNT"] });
     expect(result).toMatchObject({ status: "FAILED", message: "Retail adapter failed without a structured result", counts: { failed: 1 } });
     expect(repository.runs.get("throwing:first")?.status).toBe("FAILED");
+  });
+  it("does not report rolled-back creates as durable run counts", async () => {
+    const repository = new MemoryCatalogRepository();
+    repository.inTransaction = vi.fn(async (operation) => {
+      await operation(repository);
+      throw new Error("synthetic commit failure");
+    });
+    const result = await runDiscovery({ adapter: new TargetAdapter("fixture"), repository, now: new Date("2026-07-18T16:00:00.000Z"), runKey: "rollback:counts", terms: ["TMNT"] });
+    expect(result).toMatchObject({ status: "FAILED", counts: { fetched: 3, parsed: 3, created: 0, updated: 0, failed: 1 } });
   });
 });

@@ -17,6 +17,10 @@ export class MemoryCatalogRepository implements CatalogRepository {
   readonly runs = new Map<string, IngestionRunRecord>();
   readonly reviews = new Map<string, { candidateProductIds: string[]; reasonCode: string }>();
 
+  async inTransaction<T>(operation: (repository: CatalogRepository) => Promise<T>): Promise<T> {
+    return operation(this);
+  }
+
   async startRun(input: { sourceKey: string; jobType: string; runKey: string; parserVersion: string; startedAt: Date }): Promise<IngestionRunRecord> {
     const existing = this.runs.get(input.runKey);
     if (existing) return structuredClone(existing);
