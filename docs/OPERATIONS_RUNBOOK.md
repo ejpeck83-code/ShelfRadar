@@ -19,6 +19,8 @@ Preview is read-only synthetic data: `NODE_ENV=production`, `SHELF_RADAR_DATA_MO
 
 Production uses `SHELF_RADAR_DATA_MODE=database`, `AUTH_MODE=shared-secret`, strong unique `AUTH_SECRET` and `CRON_SECRET`, one `ALLOWED_USER_EMAIL` owner login value, database URLs, `LIVE_INGESTION_ENABLED=true`, `FIXTURE_INGESTION_ENABLED=false`, `NECA_ADAPTER_MODE=public`, `REDDIT_ADAPTER_MODE=unavailable`, and every other source unavailable. Use HTTPS only. Store secrets in the platform secret manager.
 
+Owner access uses `/login` for mobile-friendly sign-in. A successful login sets a signed, HTTP-only, same-site owner session cookie for 30 days. HTTP Basic credentials remain accepted for smoke tests and scripts, but the browser path should use the login page.
+
 ## Jobs and schedules
 
 Vercel Cron sends `GET` with `Authorization: Bearer $CRON_SECRET` and no Cookie header; manual operations may use `POST` with the same bearer. Source routes are `/api/jobs/ingest/{target|walmart|meijer|neca|online|reddit}`; retention is `/api/jobs/retention`. Each job uses a PostgreSQL advisory lease. A collision returns `409` and `Retry-After: 60`. Scheduled run keys are deterministic per source/minute, and ingestion tables record sanitized status/counts.
