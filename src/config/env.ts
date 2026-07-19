@@ -3,7 +3,8 @@ import { isPublicHttpUrl } from "@/domain/adapters";
 
 const booleanString = z.enum(["true", "false"]).transform((value) => value === "true");
 const adapterMode = z.enum(["fixture", "unavailable", "provider"]);
-const crowdAdapterMode = z.enum(["fixture", "unavailable", "oauth"]);
+const necaAdapterMode = z.enum(["fixture", "unavailable", "provider", "public"]);
+const crowdAdapterMode = z.enum(["fixture", "unavailable", "oauth", "rss"]);
 const productionSecret = z.string().min(32).max(512);
 const providerUrl = z.string().refine((value) => isPublicHttpUrl(value) && new URL(value).protocol === "https:", "must be a public HTTPS URL without embedded credentials");
 
@@ -22,7 +23,7 @@ export const envSchema = z
     TARGET_PROVIDER_API_KEY: z.string().min(1).optional(),
     WALMART_ADAPTER_MODE: adapterMode.default("fixture"),
     MEIJER_ADAPTER_MODE: adapterMode.default("fixture"),
-    NECA_ADAPTER_MODE: adapterMode.default("fixture"),
+    NECA_ADAPTER_MODE: necaAdapterMode.default("fixture"),
     ONLINE_RETAIL_ADAPTER_MODE: adapterMode.default("fixture"),
     REDDIT_ADAPTER_MODE: crowdAdapterMode.default("fixture"),
     REDDIT_CLIENT_ID: z.string().min(1).optional(),
@@ -45,9 +46,12 @@ export const envSchema = z
     ALLOWED_USER_EMAIL: z.email().optional()
   })
   .superRefine((env, ctx) => {
-    const providerModes = [env.TARGET_ADAPTER_MODE, env.WALMART_ADAPTER_MODE, env.MEIJER_ADAPTER_MODE, env.NECA_ADAPTER_MODE, env.ONLINE_RETAIL_ADAPTER_MODE];
+    const providerModes = [env.TARGET_ADAPTER_MODE, env.WALMART_ADAPTER_MODE, env.MEIJER_ADAPTER_MODE, env.ONLINE_RETAIL_ADAPTER_MODE];
     if (providerModes.includes("provider") && !env.LIVE_INGESTION_ENABLED) {
       ctx.addIssue({ code: "custom", path: ["LIVE_INGESTION_ENABLED"], message: "must be true for every retail provider mode" });
+    }
+    if (["provider", "public"].includes(env.NECA_ADAPTER_MODE) && !env.LIVE_INGESTION_ENABLED) {
+      ctx.addIssue({ code: "custom", path: ["LIVE_INGESTION_ENABLED"], message: "must be true for NECA provider or public mode" });
     }
     if (env.TARGET_ADAPTER_MODE === "provider") {
       if (!env.TARGET_PROVIDER_BASE_URL || !env.TARGET_PROVIDER_API_KEY) {
@@ -61,6 +65,9 @@ export const envSchema = z
       if (!env.REDDIT_CLIENT_ID || !env.REDDIT_CLIENT_SECRET || !env.REDDIT_REFRESH_TOKEN) {
         ctx.addIssue({ code: "custom", path: ["REDDIT_CLIENT_ID"], message: "approved Reddit OAuth credentials are required for OAuth mode" });
       }
+    }
+    if (env.REDDIT_ADAPTER_MODE === "rss" && !env.LIVE_INGESTION_ENABLED) {
+      ctx.addIssue({ code: "custom", path: ["LIVE_INGESTION_ENABLED"], message: "must be true for Reddit RSS mode" });
     }
     if (env.SHELF_RADAR_DATA_MODE === "database" && !env.DATABASE_URL) {
       ctx.addIssue({ code: "custom", path: ["DATABASE_URL"], message: "is required for database data mode" });

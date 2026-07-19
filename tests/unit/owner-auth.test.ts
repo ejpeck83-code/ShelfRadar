@@ -25,6 +25,8 @@ describe("owner mutation authorization", () => {
     const env = envSchema.parse({ CRON_SECRET: "release-cron-secret-that-is-long-enough" });
     const headers = { authorization: "Bearer release-cron-secret-that-is-long-enough" };
     expect(isAuthorizedJob(new Request("http://localhost/api/jobs/ingest", { method: "POST", headers }), env)).toBe(true);
+    expect(isAuthorizedJob(new Request("http://localhost/api/jobs/ingest", { method: "GET", headers }), env)).toBe(true);
     expect(isAuthorizedJob(new Request("http://localhost/api/jobs/ingest", { method: "POST", headers: { ...headers, cookie: "session=browser" } }), env)).toBe(false);
+    expect(isAuthorizedJob(new Request("http://localhost/api/jobs/ingest", { method: "PUT", headers }), env)).toBe(false);
   });
 });

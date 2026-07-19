@@ -41,7 +41,7 @@ export interface RedditApprovedAccessClient {
 }
 
 type RedditAdapterOptions = {
-  mode: "fixture" | "unavailable" | "oauth";
+  mode: "fixture" | "unavailable" | "oauth" | "rss";
   communities?: readonly string[];
   fixturePages?: readonly unknown[];
   client?: RedditApprovedAccessClient;
@@ -173,7 +173,7 @@ export class RedditCrowdAdapter implements CrowdSourceAdapter {
       return { kind: "malformed", reason: "Reddit query terms exceed the configured bound" };
     }
     if (this.options.mode === "unavailable") return { kind: "unavailable", reason: "Reddit approved access is not configured; cached sightings remain visible" };
-    if (this.options.mode === "oauth" && !this.options.client) return { kind: "unavailable", reason: "Reddit OAuth mode selected without an approved-access client" };
+    if (["oauth", "rss"].includes(this.options.mode) && !this.options.client) return { kind: "unavailable", reason: "Reddit live mode selected without an approved-access client" };
 
     const priorCheckpoint = decodeRedditCheckpoint(query.checkpoint);
     if (query.checkpoint && !priorCheckpoint) return { kind: "malformed", reason: "Reddit checkpoint is invalid" };

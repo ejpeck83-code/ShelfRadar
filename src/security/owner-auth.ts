@@ -9,7 +9,7 @@ export function isAuthorizedOwner(request: Request, env: AppEnv): boolean {
 }
 
 export function isAuthorizedJob(request: Request, env: AppEnv): boolean {
-  if (request.method !== "POST" || request.headers.has("cookie") || !env.CRON_SECRET) return false;
+  if (!(["GET", "POST"].includes(request.method)) || request.headers.has("cookie") || !env.CRON_SECRET) return false;
   const authorization = request.headers.get("authorization");
   return Boolean(authorization?.startsWith("Bearer ") && constantTimeEqual(authorization.slice(7), env.CRON_SECRET));
 }

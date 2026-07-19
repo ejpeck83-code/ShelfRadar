@@ -17,6 +17,30 @@ describe("source health matrix", () => {
     expect(buildSourceMatrix(database).every((source) => source.state === "unavailable")).toBe(true);
   });
 
+  it("labels only explicitly composed public production sources as live", () => {
+    const env = envSchema.parse({
+      NODE_ENV: "production",
+      SHELF_RADAR_DATA_MODE: "database",
+      DATABASE_URL: "postgresql://example.invalid/shelf_radar",
+      AUTH_MODE: "shared-secret",
+      AUTH_SECRET: "a".repeat(32),
+      ALLOWED_USER_EMAIL: "owner@example.com",
+      CRON_SECRET: "b".repeat(32),
+      FIXTURE_INGESTION_ENABLED: "false",
+      LIVE_INGESTION_ENABLED: "true",
+      TARGET_ADAPTER_MODE: "unavailable",
+      WALMART_ADAPTER_MODE: "unavailable",
+      MEIJER_ADAPTER_MODE: "unavailable",
+      NECA_ADAPTER_MODE: "public",
+      ONLINE_RETAIL_ADAPTER_MODE: "unavailable",
+      REDDIT_ADAPTER_MODE: "rss"
+    });
+    const matrix = new Map(buildSourceMatrix(env).map((source) => [source.key, source]));
+    expect(matrix.get("neca")).toMatchObject({ state: "live", note: expect.stringContaining("official NECA Store") });
+    expect(matrix.get("reddit")).toMatchObject({ state: "live", note: expect.stringContaining("Public subreddit RSS") });
+    expect(["target", "walmart", "meijer", "online"].every((key) => matrix.get(key as "target")?.state === "unavailable")).toBe(true);
+  });
+
   it("can fail each source independently and all sources together", () => {
     const keys = ["target", "walmart", "meijer", "neca", "online", "reddit"] as const;
     for (const key of keys) {

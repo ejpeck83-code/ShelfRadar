@@ -28,15 +28,18 @@
     "test:all": "npm test && npm run test:integration",
     "test:e2e": "playwright test",
     "test:preview": "playwright test tests/e2e/preview-smoke.spec.ts",
+    "test:production": "playwright test tests/e2e/production-smoke.spec.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --import tsx scripts/migrate.ts",
     "db:seed": "node --import tsx scripts/seed.ts",
+    "job:live": "node --import tsx scripts/run-live-source.ts",
     "demo:fixtures": "node --import tsx scripts/fixture-demo.ts",
     "demo:retail-fixtures": "node --import tsx scripts/retail-fixture-demo.ts",
     "demo:web": "cross-env SHELF_RADAR_DATA_MODE=fixture next dev"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",
+    "fast-xml-parser": "5.10.1",
     "next": "16.2.10",
     "postgres": "3.4.9",
     "react": "19.2.7",

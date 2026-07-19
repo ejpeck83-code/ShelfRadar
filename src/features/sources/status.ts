@@ -31,6 +31,10 @@ export function sourceStateFor(env: AppEnv, key: SourceKey): SourceState {
     reddit: env.REDDIT_ADAPTER_MODE
   } as const)[key];
   if (mode === "fixture" && env.FIXTURE_INGESTION_ENABLED && (env.NODE_ENV !== "production" || env.SHELF_RADAR_DATA_MODE === "fixture")) return "fixture-only";
+  if (env.SHELF_RADAR_DATA_MODE === "database" && env.LIVE_INGESTION_ENABLED) {
+    if (key === "neca" && mode === "public") return "live";
+    if (key === "reddit" && mode === "rss") return "live";
+  }
   return "unavailable";
 }
 
@@ -44,7 +48,11 @@ export function buildSourceMatrix(env: AppEnv): Array<{ key: SourceKey; label: s
       state,
       note: state === "fixture-only"
         ? "Deterministic synthetic data; no live request"
-        : "No approved live connector is active; cached records remain readable"
+        : state === "live" && key === "neca"
+          ? "Read-only product and online offer signals from the official NECA Store catalog"
+          : state === "live" && key === "reddit"
+            ? "Public subreddit RSS sightings; reports remain unverified crowd evidence"
+            : "No approved live connector is active; cached records remain readable"
     };
   });
 }

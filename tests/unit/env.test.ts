@@ -6,6 +6,14 @@ describe("environment safety", () => {
   it.each(["WALMART_ADAPTER_MODE", "MEIJER_ADAPTER_MODE", "NECA_ADAPTER_MODE", "ONLINE_RETAIL_ADAPTER_MODE"] as const)("requires live ingestion for %s", (key) => {
     expect(() => envSchema.parse({ [key]: "provider", LIVE_INGESTION_ENABLED: "false" })).toThrow();
   });
+  it("allows the reviewed public NECA storefront and Reddit RSS modes only with live ingestion", () => {
+    expect(() => envSchema.parse({ NECA_ADAPTER_MODE: "public", LIVE_INGESTION_ENABLED: "false" })).toThrow();
+    expect(() => envSchema.parse({ REDDIT_ADAPTER_MODE: "rss", LIVE_INGESTION_ENABLED: "false" })).toThrow();
+    expect(envSchema.parse({ NECA_ADAPTER_MODE: "public", REDDIT_ADAPTER_MODE: "rss", LIVE_INGESTION_ENABLED: "true" })).toMatchObject({
+      NECA_ADAPTER_MODE: "public",
+      REDDIT_ADAPTER_MODE: "rss"
+    });
+  });
   it("rejects unauthenticated production database mode", () => { expect(() => envSchema.parse({ NODE_ENV: "production", SHELF_RADAR_DATA_MODE: "database", DATABASE_URL: "postgresql://user:pass@db/test", AUTH_MODE: "development" })).toThrow(); });
   it("requires long owner and job secrets for production database mode", () => {
     const base = { NODE_ENV: "production", SHELF_RADAR_DATA_MODE: "database", DATABASE_URL: "postgresql://user:pass@db/test", AUTH_MODE: "shared-secret", ALLOWED_USER_EMAIL: "owner@example.com" };
