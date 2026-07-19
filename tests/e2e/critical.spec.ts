@@ -31,6 +31,25 @@ test("filters Ross signals without collapsing location scopes", async ({ page })
   await expect(page.getByText("Fixture demo.")).toBeVisible();
 });
 
+test("discover search finds catalog matches and offers official retailer searches", async ({ page }) => {
+  await page.goto("/discover?q=ronin");
+  await expect(page.getByLabel("Search figures")).toHaveValue("ronin");
+  await expect(page.getByRole("heading", { name: /Ultimate Leonardo/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Search Target for ronin/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Search NECA Store for ronin/ })).toBeVisible();
+});
+
+test("Ignore removes a product from active Discover and keeps it recoverable", async ({ page }) => {
+  await page.goto("/discover?q=donatello");
+  await expect(page.getByRole("heading", { name: /Donatello/ })).toBeVisible();
+  const saved = page.waitForResponse((response) => response.request().method() === "POST" && /\/api\/products\/[^/]+\/state$/.test(new URL(response.url()).pathname));
+  await page.getByRole("article").first().getByRole("button", { name: "Ignore" }).click();
+  expect((await saved).status()).toBe(200);
+  await expect(page.getByRole("heading", { name: "No active catalog matches" })).toBeVisible();
+  await expect(page.getByText("Ignored products (1)")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Ignore" })).toHaveAttribute("aria-pressed", "true");
+});
+
 test("detail exposes cross-retailer listings and degraded source truth", async ({ page }) => {
   await page.goto("/products/2d1f0d9e-06d4-4e61-b7f1-6d10442fda01");
   await expect(page.getByRole("heading", { name: "Retailer listings" })).toBeVisible();
@@ -56,6 +75,10 @@ test("primary discovery actions are keyboard reachable", async ({ page }) => {
   await expect(page.getByRole("link", { name: "Skip to main content" })).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(page.getByRole("link", { name: "Shelf Radar" })).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(page.getByLabel("Search figures")).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "Search" })).toBeFocused();
   await page.keyboard.press("Tab");
   await expect(page.getByRole("article").first().getByRole("link", { name: /Open NECA TMNT/ })).toBeFocused();
   await page.keyboard.press("Tab");

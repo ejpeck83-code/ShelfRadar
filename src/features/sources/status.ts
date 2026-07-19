@@ -53,7 +53,7 @@ export function buildSourceMatrix(env: AppEnv): Array<{ key: SourceKey; label: s
       note: state === "fixture-only"
         ? "Deterministic synthetic data; no live request"
         : state === "pending-sanctioned-access"
-          ? "Pending sanctioned access; no production connector or automated retailer request"
+          ? "No approved store-level feed is connected. Manual field checks and official retailer search shortcuts are active while access is pursued."
         : state === "live" && key === "neca"
           ? "Read-only product and online offer signals from the official NECA Store catalog"
           : key === "reddit"
