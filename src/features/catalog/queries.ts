@@ -21,10 +21,11 @@ export async function listProducts(): Promise<ProductView[]> {
     const productIds = rows.map((row) => row.product.id);
     const listingIds = rows.map((row) => row.listing.id);
     const retailerIds = [...new Set(rows.map((row) => row.listing.retailerId))];
-    const [ids, observations, fieldStores] = await Promise.all([
+    const [ids, observations, fieldStores, scoutStores] = await Promise.all([
       productIds.length ? db.select().from(productIdentifiers).where(inArray(productIdentifiers.productId, productIds)) : Promise.resolve([]),
       listingIds.length ? db.select({ observation: availabilityObservations, storeName: stores.name }).from(availabilityObservations).leftJoin(stores, eq(stores.id, availabilityObservations.storeId)).where(inArray(availabilityObservations.listingId, listingIds)).orderBy(desc(availabilityObservations.observedAt)) : Promise.resolve([]),
-      retailerIds.length ? db.select().from(stores).where(inArray(stores.retailerId, retailerIds)) : Promise.resolve([])
+      retailerIds.length ? db.select().from(stores).where(inArray(stores.retailerId, retailerIds)) : Promise.resolve([]),
+      db.select({ store: stores, retailerKey: retailers.key, retailerName: retailers.name }).from(stores).innerJoin(retailers, eq(retailers.id, stores.retailerId)).where(eq(retailers.key, "target"))
     ]);
     const identifiersByProduct = groupBy(ids, (identifier) => identifier.productId);
     const observationsByListing = groupBy(observations, (item) => item.observation.listingId);
@@ -33,6 +34,21 @@ export async function listProducts(): Promise<ProductView[]> {
     return productRows.map((productRow) => ({
       id: productRow.product.id, name: productRow.product.canonicalName, brand: productRow.product.brand ?? "Unknown brand", line: productRow.product.line ?? "Unknown line", productType: productRow.product.productType ?? "Collectible", imageUrl: productRow.product.primaryImageUrl, firstDetectedAt: productRow.product.firstDetectedAt.toISOString(), state: productRow.state ?? "NEW",
       identifiers: (identifiersByProduct.get(productRow.product.id) ?? []).map((id) => ({ kind: id.kind, value: id.valueDisplay })),
+      scoutStores: scoutStores.filter((item) => item.store.active).map((item) => ({
+        id: item.store.id,
+        name: item.store.name,
+        city: item.store.city,
+        region: item.store.region,
+        retailerKey: item.retailerKey,
+        retailer: item.retailerName,
+        actionLinks: retailerActionLinks({
+          retailerKey: item.retailerKey,
+          retailerName: item.retailerName,
+          listingUrl: `https://www.target.com/s?searchTerm=${encodeURIComponent(productRow.product.canonicalName)}`,
+          productName: productRow.product.canonicalName,
+          identifiers: (identifiersByProduct.get(productRow.product.id) ?? []).map((id) => ({ kind: id.kind, value: id.valueDisplay }))
+        })
+      })),
       listings: rows.filter((row) => row.product.id === productRow.product.id).map((row) => ({
         id: row.listing.id,
         retailerKey: row.retailerKey,

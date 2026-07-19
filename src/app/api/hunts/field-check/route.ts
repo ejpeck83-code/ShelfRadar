@@ -10,7 +10,8 @@ export async function POST(request: Request) {
   const next = safeNextPath(stringValue(formData.get("next"))) ?? "/hunts";
   const parsed = manualFieldCheckSchema.safeParse({
     productId: stringValue(formData.get("productId")),
-    listingId: stringValue(formData.get("listingId")),
+    listingId: optionalStringValue(formData.get("listingId")),
+    retailerKey: optionalStringValue(formData.get("retailerKey")),
     storeId: optionalStringValue(formData.get("storeId")),
     status: stringValue(formData.get("status")),
     note: optionalStringValue(formData.get("note")),

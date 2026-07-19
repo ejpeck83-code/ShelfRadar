@@ -19,7 +19,7 @@ export type FieldCheckTaskView = {
   productId: string;
   productName: string;
   productImageUrl: string | null;
-  listingId: string;
+  listingId?: string;
   retailer: string;
   retailerKey: string;
   storeId?: string;
@@ -98,7 +98,7 @@ export function buildHuntLeads(product: ProductView, options: HuntLeadOptions = 
 
 export function buildFieldCheckTasks(products: ProductView[], options: HuntLeadOptions = {}): FieldCheckTaskView[] {
   const calculatedAt = options.calculatedAt ?? new Date();
-  const tasks = products.flatMap((product) => product.listings.flatMap((listing) => {
+  const listingTasks = products.flatMap((product) => product.listings.flatMap((listing) => {
     if (listing.retailerKey === "neca" || listing.availability.every((observation) => observation.status === "ONLINE_ONLY")) return [];
     const stores: FieldStoreCandidate[] = listing.fieldStores.length
       ? listing.fieldStores.map((store) => ({ storeId: store.id, storeName: store.name, storeLocation: `${store.city}, ${store.region}` }))
@@ -143,6 +143,40 @@ export function buildFieldCheckTasks(products: ProductView[], options: HuntLeadO
       };
     });
   }));
+  const scoutTasks = products.flatMap((product) => {
+    const listingRetailers = new Set(product.listings.map((listing) => listing.retailerKey));
+    return product.scoutStores.filter((store) => !listingRetailers.has(store.retailerKey)).map((store) => {
+      const result = rankStore({ productId: product.id, storeId: store.id, calculatedAt, storePreference: 0, evidence: [] });
+      const lead: HuntLeadView = {
+        id: `scout:${product.id}:${store.id}`,
+        name: store.name,
+        retailer: store.retailer,
+        label: labelText(result.label),
+        score: result.score,
+        factors: result.factors,
+        calculatedAt: result.calculatedAt,
+        sourceNote: "Scout card; no sanctioned retailer listing yet"
+      };
+      return {
+        id: `scout:${product.id}:${store.id}`,
+        productId: product.id,
+        productName: product.name,
+        productImageUrl: product.imageUrl,
+        retailer: store.retailer,
+        retailerKey: store.retailerKey,
+        storeId: store.id,
+        storeName: store.name,
+        storeLocation: `${store.city}, ${store.region}`,
+        sourceState: "pending-sanctioned-access",
+        statusText: "No store-specific evidence yet",
+        shouldCheckToday: true,
+        sourceNote: "Target access is pending; use this as a manual scout card",
+        actionLinks: store.actionLinks,
+        lead
+      };
+    });
+  });
+  const tasks = [...listingTasks, ...scoutTasks];
   return tasks.sort((left, right) =>
     Number(right.shouldCheckToday) - Number(left.shouldCheckToday)
     || right.lead.score - left.lead.score

@@ -10,7 +10,7 @@ const targetFieldStores = [
   { id: "fixture-target-noblesville", name: "Target Noblesville", city: "Noblesville", region: "IN" }
 ];
 
-const fixtureProducts: Array<Omit<ProductView, "listings"> & { listings: Array<Omit<ProductView["listings"][number], "fieldStores" | "actionLinks">> }> = [
+const fixtureProducts: Array<Omit<ProductView, "listings" | "scoutStores"> & { listings: Array<Omit<ProductView["listings"][number], "fieldStores" | "actionLinks">> }> = [
   {
     id: "2d1f0d9e-06d4-4e61-b7f1-6d10442fda01", name: "NECA TMNT The Last Ronin Ultimate Leonardo", brand: "NECA", line: "The Last Ronin", productType: "Action Figure", imageUrl: "/products/fixture-last-ronin-leonardo.png", firstDetectedAt: "2026-07-18T16:00:00.000Z", state: "NEW",
     identifiers: [{ kind: "UPC", value: "634482541333" }, { kind: "DPCI", value: "087-16-7921" }, { kind: "TCIN", value: "91234567" }, { kind: "WALMART_ITEM_ID", value: "147258369" }, { kind: "MANUFACTURER_SKU", value: "54133" }],
@@ -67,6 +67,18 @@ export function setFixtureProductState(productId: string, state: UserProductStat
 function enrichFixtureProduct(product: (typeof fixtureProducts)[number]): ProductView {
   return {
     ...product,
+    scoutStores: targetFieldStores.map((store) => ({
+      ...store,
+      retailerKey: "target",
+      retailer: "Target",
+      actionLinks: retailerActionLinks({
+        retailerKey: "target",
+        retailerName: "Target",
+        listingUrl: `https://www.target.com/s?searchTerm=${encodeURIComponent(product.name)}`,
+        productName: product.name,
+        identifiers: product.identifiers
+      })
+    })),
     listings: product.listings.map((listing) => ({
       ...listing,
       fieldStores: listing.retailerKey === "target" ? targetFieldStores : [],

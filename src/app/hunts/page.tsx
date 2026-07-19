@@ -77,7 +77,8 @@ function FieldCheckCard({ task, priority, now, readOnly }: { task: FieldCheckTas
       <form className="field-check-form" action="/api/hunts/field-check" method="post">
         <input type="hidden" name="next" value="/hunts" />
         <input type="hidden" name="productId" value={task.productId} />
-        <input type="hidden" name="listingId" value={task.listingId} />
+        <input type="hidden" name="listingId" value={task.listingId ?? ""} />
+        <input type="hidden" name="retailerKey" value={task.retailerKey} />
         <input type="hidden" name="storeId" value={task.storeId ?? ""} />
         <input type="hidden" name="mutationId" value={crypto.randomUUID()} />
         <label><span className="sr-only">Optional field check note</span><input name="note" maxLength={160} placeholder="Optional note: peg empty, saw 2, messy NECA section" disabled={readOnly} /></label>
