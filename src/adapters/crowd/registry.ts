@@ -2,21 +2,16 @@ import fixturePage from "../../../tests/fixtures/crowd/reddit/posts.json";
 import type { AppEnv } from "@/config/env";
 import type { CrowdSourceAdapter } from "@/domain/adapters";
 import { RedditCrowdAdapter, type RedditApprovedAccessClient } from "./reddit";
-import { RedditRssClient } from "./reddit/rss-client";
 
 export function createCrowdAdapterRegistry(
   env: AppEnv,
   approvedRedditClient?: RedditApprovedAccessClient
 ): ReadonlyMap<string, CrowdSourceAdapter> {
   const communities = env.REDDIT_COMMUNITIES.split(",").map((community) => community.trim()).filter(Boolean);
-  const publicRssClient = env.REDDIT_ADAPTER_MODE === "rss" && env.LIVE_INGESTION_ENABLED
-    ? new RedditRssClient({
-      userAgent: env.REDDIT_USER_AGENT,
-      requestTimeoutMs: env.ADAPTER_REQUEST_TIMEOUT_MS,
-      minRequestIntervalMs: env.ADAPTER_MIN_REQUEST_INTERVAL_MS
-    })
-    : undefined;
-  const client = approvedRedditClient ?? publicRssClient;
+  // Reddit's current Responsible Builder Policy requires explicit approval for
+  // automated access. A transport is composed only when approved access is
+  // injected by the owner; environment flags alone cannot activate public RSS.
+  const client = approvedRedditClient;
   const mode = effectiveRedditMode(env, client);
   const adapter = new RedditCrowdAdapter({
     mode,

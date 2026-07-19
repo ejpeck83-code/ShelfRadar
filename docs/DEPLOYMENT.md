@@ -14,7 +14,7 @@ This is inexpensive, mobile-friendly, and operationally light while preserving a
 
 - Local: fixture adapters by default, local PostgreSQL, mock single user.
 - Preview: isolated or branched database where practical; fixture ingestion; no production schedules.
-- Production: database mode, shared-secret allowlisted-owner authentication, authenticated job routes, fixtures disabled, Target/Walmart/Meijer/online unavailable, reviewed NECA public catalog and Reddit RSS explicitly enabled, daily schedules, and verified backups.
+- Production: database mode, shared-secret allowlisted-owner authentication, authenticated job routes, fixtures disabled, Target/Walmart/Meijer pending sanctioned access, online unavailable, reviewed NECA public catalog explicitly enabled, retention scheduled, and verified backups. Reddit automation remains disabled pending explicit approval.
 
 Never let preview deployments poll live retailers automatically.
 

@@ -4,26 +4,26 @@
 
 | Source | Shipped production access | Fixture preview | Live enablement |
 | --- | --- | --- | --- |
-| Target | Unavailable | Fixture-only | Provider extension point; no connector shipped |
-| Walmart | Unavailable | Fixture-only | Provider extension point; no connector shipped |
-| Meijer | Unavailable | Fixture-only | Provider extension point; no connector shipped |
+| Target | Pending sanctioned access | Fixture-only | No approved consumer local-store connector |
+| Walmart | Pending sanctioned access | Fixture-only | Scintilla requires supplier sponsorship and downstream-use permission |
+| Meijer | Pending sanctioned access | Fixture-only | Direct/provider coverage and rights unconfirmed |
 | NECA | Reviewed public official-store catalog when enabled | Fixture-only | `NECA_ADAPTER_MODE=public`; no credential; online signals only |
 | BigBadToyStore | Unavailable | Fixture-only | Compile-time allowlist/provider extension; no connector shipped |
-| Reddit / Ross Finds | Reviewed public subreddit RSS when enabled | Fixture-only | `REDDIT_ADAPTER_MODE=rss`; OAuth remains an optional approved-access path |
+| Reddit / Ross Finds | Unavailable; cached sightings retained | Fixture-only | Explicit Reddit approval and an injected approved-access client required |
 
-NECA public catalog and Reddit RSS are the only composed live connectors. They still require explicit global enablement and their source modes. Cached database records remain readable and retain original timestamps when a source is unavailable.
+NECA public catalog is the only composed live connector. Cached database records remain readable and retain original timestamps when any source is unavailable or pending access.
 
 ## Environment profiles
 
 Preview is read-only synthetic data: `NODE_ENV=production`, `SHELF_RADAR_DATA_MODE=fixture`, `FIXTURE_INGESTION_ENABLED=true`, `LIVE_INGESTION_ENABLED=false`, every adapter mode `fixture`. Do not configure `DATABASE_URL`, schedules, or provider credentials.
 
-Production uses `SHELF_RADAR_DATA_MODE=database`, `AUTH_MODE=shared-secret`, strong unique `AUTH_SECRET` and `CRON_SECRET`, one `ALLOWED_USER_EMAIL`, database URLs, `LIVE_INGESTION_ENABLED=true`, `FIXTURE_INGESTION_ENABLED=false`, `NECA_ADAPTER_MODE=public`, `REDDIT_ADAPTER_MODE=rss`, and every other source unavailable. Use HTTPS only. Store secrets in the platform secret manager.
+Production uses `SHELF_RADAR_DATA_MODE=database`, `AUTH_MODE=shared-secret`, strong unique `AUTH_SECRET` and `CRON_SECRET`, one `ALLOWED_USER_EMAIL`, database URLs, `LIVE_INGESTION_ENABLED=true`, `FIXTURE_INGESTION_ENABLED=false`, `NECA_ADAPTER_MODE=public`, `REDDIT_ADAPTER_MODE=unavailable`, and every other source unavailable. Use HTTPS only. Store secrets in the platform secret manager.
 
 ## Jobs and schedules
 
 Vercel Cron sends `GET` with `Authorization: Bearer $CRON_SECRET` and no Cookie header; manual operations may use `POST` with the same bearer. Source routes are `/api/jobs/ingest/{target|walmart|meijer|neca|online|reddit}`; retention is `/api/jobs/retention`. Each job uses a PostgreSQL advisory lease. A collision returns `409` and `Retry-After: 60`. Scheduled run keys are deterministic per source/minute, and ingestion tables record sanitized status/counts.
 
-`vercel.json` attaches two production-only, Vercel Hobby-compatible daily jobs: Reddit at 12:00 UTC and retention at 13:00 UTC. Hobby execution may occur at any point in the configured hour. Preview deployments do not receive production cron invocations.
+`vercel.json` attaches one production-only, Vercel Hobby-compatible daily retention job at 13:00 UTC. Reddit polling was removed after the June 2026 policy change. Hobby execution may occur at any point in the configured hour. Preview deployments do not receive production cron invocations.
 
 NECA runs at 10:15 UTC through `.github/workflows/live-ingestion.yml`, using the same canonical adapter, ingestion service, PostgreSQL advisory lease, and idempotent persistence. It runs outside Vercel because the official storefront currently returns `503` to Vercel egress while succeeding from approved normal clients. Configure the GitHub `production` environment with `DATABASE_URL`, `AUTH_SECRET`, and `CRON_SECRET`; the latter two satisfy the canonical production configuration validation and must be the same secret-manager values used by the app. A non-successful source result fails the workflow visibly. Manual recovery is `workflow_dispatch`; no source payload is stored in Actions.
 
@@ -39,7 +39,7 @@ NECA runs at 10:15 UTC through `.github/workflows/live-ingestion.yml`, using the
 6. Enable only that source’s schedule. Watch throttling, parser failures, stale age and database growth.
 7. Disable with its adapter mode first; use `LIVE_INGESTION_ENABLED=false` as the global kill switch.
 
-The registries compose only the reviewed NECA public catalog and Reddit RSS modes. Target, Walmart, Meijer, BigBadToyStore, and Reddit OAuth remain unavailable without a reviewed connector/credential composition.
+The registries compose only the reviewed NECA public catalog. Target, Walmart, and Meijer remain pending sanctioned access; BigBadToyStore and Reddit remain unavailable without a reviewed connector/credential composition.
 
 ## Backup and restore
 

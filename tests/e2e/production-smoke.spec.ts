@@ -33,7 +33,7 @@ test("persistent production discovers real products and persists classification"
   await expect(page.getByText(/online only|preorder|out of stock/i).first()).toBeVisible();
 });
 
-test("production shows real public signals and truthful source health", async ({ page }) => {
+test("production keeps cached public signals readable and shows truthful source health", async ({ page }) => {
   await page.goto("/signals");
   await expect(page.getByRole("heading", { name: "Signals" })).toBeVisible();
   await expect(page.getByRole("link", { name: /Open public post/ }).first()).toHaveAttribute("href", /^https:\/\/www\.reddit\.com\/r\//);
@@ -42,8 +42,9 @@ test("production shows real public signals and truthful source health", async ({
   await page.goto("/status");
   await expect(page.getByRole("heading", { name: "Source status" })).toBeVisible();
   await expect(page.getByRole("article").filter({ hasText: "NECA" }).getByText("Live", { exact: true })).toBeVisible();
-  await expect(page.getByRole("article").filter({ hasText: "Reddit / Ross Finds" }).getByText("Live", { exact: true })).toBeVisible();
-  await expect(page.getByText("Unavailable", { exact: true })).toHaveCount(4);
+  await expect(page.getByRole("article").filter({ hasText: "Reddit / Ross Finds" }).getByText("Unavailable", { exact: true })).toBeVisible();
+  await expect(page.getByText("Pending sanctioned access", { exact: true })).toHaveCount(3);
+  await expect(page.getByText("Unavailable", { exact: true })).toHaveCount(2);
   const results = await new AxeBuilder({ page }).analyze();
   expect(results.violations.filter((violation) => ["serious", "critical"].includes(violation.impact ?? ""))).toEqual([]);
 });

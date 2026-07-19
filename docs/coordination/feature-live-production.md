@@ -38,3 +38,12 @@ In progress: convert the read-only fixture release candidate into a persistent s
 - Implementation commit: `efeebd0`.
 - Operations documentation commit: `d66d133`.
 - Final coordination-only commit and branch HEAD are reported in the PR/completion response because a commit cannot contain its own SHA.
+
+## 2026-07-19 source-feasibility correction
+
+- Preserved the deployed PostgreSQL application and existing test-first connector work while reframing the release around sanctioned-source feasibility.
+- Current official research is recorded in `docs/SOURCE_FEASIBILITY.md`. Target, Walmart, and Meijer are now presented as **Pending sanctioned access**, not implemented/live production adapters.
+- Walmart Scintilla has the required GTIN/store/status/quantity/timestamp data but is restricted to qualifying suppliers and supplier-owned GTINs. Target exposes no public consumer local-store API. Meijer's portal is private; Locally is a contract candidate whose TMNT coverage must be demonstrated.
+- Reddit's June 2026 Responsible Builder Policy requires explicit approval for automated access. Automatic RSS composition and the Vercel Reddit cron were removed. Existing persisted sightings remain readable as cached/stale evidence; no new Reddit requests should be made until written approval and an approved client are supplied.
+- NECA remains the only sanctioned live connector. Its persisted real data is usable, but automated refresh remains blocked until the prepared GitHub workflow reaches the default branch and its encrypted production secrets are authorized.
+- The MVP release gate is explicitly open: a functioning legitimate named-store integration must be connected and verified before release completion. Best Buy's public Products/Stores API is documented as the lowest-friction contingency, subject to user approval of retailer scope and its 72-hour cache/branding terms.

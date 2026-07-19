@@ -10,7 +10,7 @@
 6. **Idempotency at every durable boundary.** Listings, canonical identifier namespaces, observations, state mutations, and ingestion runs have independent unique keys.
 7. **Fixture web mode is explicit.** `SHELF_RADAR_DATA_MODE=fixture` provides a deterministic, no-database UI for demos and browser tests. Database mode uses the same view model backed by Drizzle.
 8. **Ranking v1 is ordinal and inspectable.** `mvp-v1.1.0` emits label, internal ordering score, factor codes, point direction, evidence reference, and timestamp. Exact product factors outweigh line/wave factors, and the UI never presents the score as a probability.
-9. **Production jobs are explicit and serialized.** Cookie-free bearer-authenticated GET/POST routes use per-source PostgreSQL advisory leases and deterministic run keys. The shipped composition allows only the reviewed official NECA Store catalog and Reddit RSS connectors; all other production sources remain unavailable until reviewed and injected.
+9. **Production jobs are explicit and serialized.** Cookie-free bearer-authenticated GET/POST routes use per-source PostgreSQL advisory leases and deterministic run keys. The shipped composition allows only the reviewed official NECA Store catalog connector. Reddit requires approved access; Target, Walmart, and Meijer remain pending sanctioned access; other sources remain unavailable until reviewed and injected.
 10. **Cached evidence survives outages.** Current source access is projected separately from persisted listings, observations, posts and sightings. Unavailable never rewrites history or becomes out of stock.
 
 ## Raw source retention

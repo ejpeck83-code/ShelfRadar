@@ -40,7 +40,7 @@ export function buildHuntLeads(product: ProductView, options: HuntLeadOptions = 
           reference: `observation:${listing.id}:${observation.storeName}`,
           observedAt: new Date(observation.observedAt),
           recentRetailPositive: positive,
-          sourceUnavailable: !observation.sourceAvailable || listing.sourceState === "unavailable"
+          sourceUnavailable: !observation.sourceAvailable || ["unavailable", "pending-sanctioned-access"].includes(listing.sourceState)
         }]
       });
       leads.push({
