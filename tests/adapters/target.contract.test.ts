@@ -16,6 +16,6 @@ describe("Target adapter contract", () => {
   it("bounds page requests and exposes provider failures honestly", async () => {
     expect(await new TargetAdapter("fixture").discover({ terms: [], pageLimit: 0 }, context)).toMatchObject({ kind: "malformed" });
     const provider = { discover: async () => { throw new Error("secret provider failure"); } };
-    expect(await new TargetAdapter("provider", provider).discover({ terms: ["TMNT"], pageLimit: 1 }, context)).toEqual({ kind: "unavailable", reason: "Target provider request failed" });
+    expect(await new TargetAdapter("provider", provider).discover({ terms: ["TMNT"], pageLimit: 1 }, context)).toEqual({ kind: "unavailable", reason: "Target approved provider request failed" });
   });
 });

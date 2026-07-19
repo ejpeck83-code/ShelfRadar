@@ -44,6 +44,7 @@ Intervals are configuration, not constants. Back off on throttling and expose st
 - Application deploys must be revertible independently of source schedules.
 - Prefer backward-compatible additive migrations. Destructive schema changes require a two-release expand/migrate/contract sequence.
 - A kill switch disables all live ingestion without disabling the read-only app.
+- Set `LIVE_INGESTION_ENABLED=false` for the global kill switch. If isolating one source, set its `*_ADAPTER_MODE=unavailable`; this is source uncertainty and must not be rendered as out of stock.
 - Retain the last known good deployment and a documented database restore test.
 
 ## Domain and installability
