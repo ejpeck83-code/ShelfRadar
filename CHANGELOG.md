@@ -14,5 +14,6 @@
 - Added PostgreSQL transactions, advisory job leases, authenticated job routes, source run health/counts, cached-data staleness states and raw-source retention.
 - Hardened owner authentication, same-origin mutations, external URL/host validation, redirect behavior, local-only product images and browser security headers.
 - Added CI dependency/secret scanning, PostgreSQL integration, critical Playwright, accessibility, preview smoke, backup/restore and rollback procedures.
+- Resolved development-tool `esbuild` advisories with exact, compatibility-checked transitive versions.
 
 No external adapter is live in v0.1.0. Production sources are unavailable until individually approved and integrated.

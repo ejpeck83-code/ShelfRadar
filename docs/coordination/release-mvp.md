@@ -22,11 +22,11 @@ Material release surfaces are listed in `docs/RELEASE_TRACEABILITY.md`; the deta
 - `npm test`: 28 files passed, 108 tests passed.
 - `npm run build`: passed with Next.js 16.2.10; 11 application routes built.
 - `npm run demo:fixtures`: passed; first run created 3 products, replay created 0 and updated 3; 3 products, 3 listings, 4 append-only observations.
-- `npm audit --omit=dev --audit-level=high`: passed, 0 production vulnerabilities.
+- `npm audit`: passed, 0 vulnerabilities after pinning safe transitive `esbuild` resolutions for Drizzle Kit and Vite.
 - PostgreSQL integration: 2 files / 8 tests passed before the final source-health query and retention no-op refinements. The current sandbox cannot reach the local service; PR CI must rerun the current commit.
 - Accessibility static contrast scan: 8/8 detected foreground/background pairs passed WCAG AA normal text. The source scanner reported layout/component false positives; the root layout owns the main landmark/skip link, wrapped labels name both selects, and `role=alert` supplies assertive live semantics.
 - Playwright: 14 critical-path cases could not launch Chromium locally because macOS denied MachPort bootstrap before any page assertion. PR CI/preview remains the required browser and axe result.
-- Clean-clone `npm ci`: not completed because a release commit could not be created after the Git metadata write was denied.
+- Clean-clone `npm ci`: passed from commit `6887eef`; 405 packages installed. Clean-clone lint, typecheck, 108 unit tests, and production build all passed. The dependency override refinement made afterward requires one final CI install check.
 - Preview deployment/smoke: not completed; publish is blocked with the same exhausted desktop elevation quota.
 
 ## Source matrix
@@ -46,6 +46,7 @@ DNS rebinding and edge rate limiting remain reviewed connector/hosting controls.
 
 - Branch: `release/mvp`
 - Base: `m4-hunt-experience` plus commit `5049c9568d40e3f7a6ca542a7988b8d10c006597`
-- Release commit: pending; the sandbox rejected `.git/index.lock` creation after its elevation quota was exhausted.
+- Release implementation commit: `6887eef364a7b8abe3af027010b8b45b0b8efcc1`.
+- Dependency/audit follow-up commit: pending.
 - Merge SHA: pending authorization.
 - Release tag: pending authorization (`v0.1.0`).

@@ -20,7 +20,7 @@
 | 6 | `src/features/sources/queries.ts:43` | Replaced full ingestion-history reads with distinct latest/latest-successful queries | performance, maintainability |
 | 7 | `src/operations/retention.ts:16` (+test) | Avoided rewriting already-redacted crowd records on every retention run | performance, correctness |
 
-Validation: lint passed; typecheck passed; 28 unit files / 108 tests passed; production build passed; production dependency audit found 0 vulnerabilities. PostgreSQL integration passed 2 files / 8 tests before the final query-only hardening; the PR CI rerun remains required.
+Validation: lint passed; typecheck passed; 28 unit files / 108 tests passed; production build passed; the full dependency audit found 0 vulnerabilities after exact transitive overrides. PostgreSQL integration passed 2 files / 8 tests before the final query-only hardening; the PR CI rerun remains required.
 
 Commit status: left uncommitted because the release working tree was already dirty before review.
 

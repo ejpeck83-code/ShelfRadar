@@ -15,7 +15,7 @@ Review scope: authentication, job secrets, external content, SSRF, redirects, re
 | Browser policy | CSP, frame denial, content-type sniff prevention, referrer policy, permissions policy, HSTS and cross-origin opener policy are emitted by Next.js. |
 | Logs/errors | Ingestion stores error codes and sanitized messages; provider exception strings, payloads and secrets are not returned. Status exposes counts/health but no credentials. Platform log access must be owner/admin only. |
 | Secret scanning | GitHub gitleaks job scans full history; `.env*` is ignored except `.env.example`. Release validation also searches tracked files and runs dependency audit. |
-| Dependencies | Exact versions and committed lockfile; CI runs production dependency audit at high severity. Findings and command result belong in the release coordination report. |
+| Dependencies | Exact versions and committed lockfile; safe scoped `esbuild` overrides remove Drizzle Kit's deprecated-loader advisory and keep Vite on its compatible release. CI runs a production dependency audit at high severity; the release audit reports zero findings across production and development dependencies. |
 | Retention/takedown | Daily authenticated retention removes crowd excerpts, author hashes and raw pointers after the configured period; minimum external ID/content hash remains for idempotency. Source takedown can invoke the same redaction earlier. |
 | Privacy | No home address, retailer credentials/cookies, production payload, private social data or multi-user profile system is stored. |
 

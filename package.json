@@ -8,7 +8,13 @@
     "node": ">=20.19.0"
   },
   "overrides": {
-    "postcss": "8.5.10"
+    "postcss": "8.5.10",
+    "@esbuild-kit/core-utils": {
+      "esbuild": "0.25.12"
+    },
+    "vite": {
+      "esbuild": "0.28.1"
+    }
   },
   "scripts": {
     "dev": "next dev",
@@ -46,6 +52,7 @@
     "cross-env": "10.1.0",
     "dotenv": "17.4.2",
     "drizzle-kit": "0.31.10",
+    "esbuild": "0.28.1",
     "eslint": "9.39.1",
     "eslint-config-next": "16.2.10",
     "fast-glob": "3.3.3",
