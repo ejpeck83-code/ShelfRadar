@@ -60,4 +60,4 @@ No test contacted Reddit or another live third-party service. The PostgreSQL int
 
 ## Commit
 
-Implementation commit SHA is reported in the final handoff because a commit cannot contain its own resulting SHA. Branch: `feature/crowd-intelligence`.
+Implementation commit: `811ba4228f37c001c9832531df9e43c4603c16d9`. Branch: `feature/crowd-intelligence`. The final branch tip also includes the coordination-note handoff commit that records this SHA.
